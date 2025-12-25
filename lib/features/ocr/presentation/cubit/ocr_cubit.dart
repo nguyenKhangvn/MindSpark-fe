@@ -11,11 +11,13 @@ class OcrCubit extends Cubit<OcrState> {
   /// Process image using OCR API
   Future<void> processImage({
     required File imageFile,
+    required String deckId,
   }) async {
     emit(OcrProcessing());
 
     final result = await _ocrService.processImage(
       imageFile: imageFile,
+      deckId: deckId,
     );
 
     result.fold(

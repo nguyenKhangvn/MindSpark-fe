@@ -5,8 +5,6 @@ import 'cubit/stats_cubit.dart';
 import 'cubit/stats_state.dart';
 import '../domain/entities/stats_entity.dart';
 import '../domain/entities/weekly_progress_entity.dart';
-import '../../auth/presentation/cubit/auth_cubit.dart';
-import '../../auth/presentation/cubit/auth_state.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -90,7 +88,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.06),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                        border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +243,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildWeeklyChart(BuildContext context, List<WeeklyProgressEntity> weeklyData) {
+  Widget _buildWeeklyChart(
+      BuildContext context, List<WeeklyProgressEntity> weeklyData) {
     if (weeklyData.isEmpty) {
       return _buildPlaceholder('No data for this week');
     }
@@ -259,8 +259,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         children: weeklyData.map((day) {
           final date = DateTime.parse(day.date);
-          final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
-          
+          final dayName = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun'
+          ][date.weekday - 1];
+
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
@@ -269,7 +277,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   width: 40,
                   child: Text(
                     dayName,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -327,7 +336,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildActivityHeatmap(BuildContext context, List<ActivityHeatmapEntity> heatmapData) {
+  Widget _buildActivityHeatmap(
+      BuildContext context, List<ActivityHeatmapEntity> heatmapData) {
     if (heatmapData.isEmpty) {
       return _buildPlaceholder('No activity data yet');
     }
@@ -335,7 +345,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     // Group by weeks (show last 12 weeks)
     final last90Days = heatmapData.take(90).toList();
     final weeks = <List<ActivityHeatmapEntity>>[];
-    
+
     for (int i = 0; i < last90Days.length; i += 7) {
       weeks.add(last90Days.skip(i).take(7).toList());
     }
@@ -350,7 +360,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Last 90 days', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text('Last 90 days',
+              style: TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -380,21 +391,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Less', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              const Text('Less',
+                  style: TextStyle(fontSize: 10, color: Colors.grey)),
               const SizedBox(width: 4),
-              ...List.generate(5, (i) => Padding(
-                padding: const EdgeInsets.only(right: 2),
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getHeatmapColor(i),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              )),
+              ...List.generate(
+                  5,
+                  (i) => Padding(
+                        padding: const EdgeInsets.only(right: 2),
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: _getHeatmapColor(i),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      )),
               const SizedBox(width: 4),
-              const Text('More', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              const Text('More',
+                  style: TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
         ],
@@ -450,7 +465,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: deck.accuracy >= 80 ? Colors.green : Colors.orange,
                       borderRadius: BorderRadius.circular(12),
@@ -468,11 +484,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _buildDeckStat('Cards', '${deck.cardsStudied}', Icons.credit_card),
+                  _buildDeckStat(
+                      'Cards', '${deck.cardsStudied}', Icons.credit_card),
                   const SizedBox(width: 16),
-                  _buildDeckStat('Correct', '${deck.correctAnswers}', Icons.check_circle),
+                  _buildDeckStat(
+                      'Correct', '${deck.correctAnswers}', Icons.check_circle),
                   const SizedBox(width: 16),
-                  _buildDeckStat('Time', '${deck.studyTimeMinutes}m', Icons.access_time),
+                  _buildDeckStat(
+                      'Time', '${deck.studyTimeMinutes}m', Icons.access_time),
                 ],
               ),
             ],

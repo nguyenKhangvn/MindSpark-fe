@@ -1,10 +1,15 @@
 import 'dart:typed_data';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Import Universal File của bạn
 import '../../../../core/utils/universal_file.dart' as universal;
+import '../../../../core/services/socket_service.dart';
+import '../../../../core/storage/token_storage.dart';
 
 import 'package:mindspark/features/card/presentation/cubit/card_cubit.dart';
 import 'package:mindspark/features/card/presentation/cubit/card_state.dart';
@@ -24,15 +29,32 @@ class OcrResultScreen extends StatefulWidget {
 class _OcrResultScreenState extends State<OcrResultScreen> {
   final List<Map<String, TextEditingController>> _cards = [];
   final ImagePicker _picker = ImagePicker();
-
-  // CHỈNH SỬA: Dùng XFile để lưu tham chiếu gốc (nếu cần dùng lại)
-  XFile? _pickedFile;
+  final SocketService _socketService = SocketService();
+  StreamSubscription<Map<String, dynamic>>? _ocrSubscription;
 
   // CHỈNH SỬA: Dùng bytes để hiển thị ảnh trên mọi nền tảng (Web & Mobile đều hỗ trợ Image.memory)
   Uint8List? _imageBytes;
 
   // Trạng thái xử lý
   String? _selectedDeckId;
+  bool _isProcessingOcrEvent = false;
+  String? _lastProcessedEventId;
+
+  bool _isWaitingForSocket = false;
+  @override
+  void initState() {
+    super.initState();
+
+    // ĐÚNG: Gọi API 1 lần duy nhất khi màn hình mở lên
+    // Dùng addPostFrameCallback để đảm bảo context đã sẵn sàng
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final deckCubit = context.read<DeckCubit>();
+      // Chỉ gọi nếu chưa có dữ liệu (để tránh load lại nếu đã có)
+      if (deckCubit.state is DeckInitial) {
+        deckCubit.getDecks();
+      }
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -41,15 +63,190 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
     if (args is String && _selectedDeckId == null) {
       _selectedDeckId = args;
     }
+
+    // Initialize WebSocket connection
+    _initializeWebSocket();
+  }
+
+  void _initializeWebSocket() async {
+    try {
+      // Create TokenStorage instance
+      final secureStorage = kIsWeb ? null : const FlutterSecureStorage();
+      final tokenStorage = TokenStorage(secureStorage);
+      await tokenStorage.init();
+
+      final accessToken = await tokenStorage.getAccessToken();
+
+      if (accessToken != null) {
+        // Parse userId from JWT token
+        final userId = _parseUserIdFromToken(accessToken);
+
+        if (userId != null) {
+          // Connect to WebSocket
+          _socketService.connect('http://localhost:3002', userId);
+
+          // Listen to OCR finished events
+          _ocrSubscription = _socketService.ocrFinishedStream.listen((data) {
+            print('📬 OCR Finished event received: $data');
+
+            // Prevent duplicate processing
+            final eventId =
+                '${data['deckId']}_${data['cardsCount']}_${data['message']}';
+            if (_lastProcessedEventId == eventId || _isProcessingOcrEvent) {
+              print('⏭️ Skipping duplicate OCR event');
+              return;
+            }
+
+            if (data['deckId'] == _selectedDeckId && mounted) {
+              _lastProcessedEventId = eventId;
+              _handleOcrWebSocketEvent(data);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      print(' Error initializing WebSocket: $e');
+    }
+  }
+
+  String? _parseUserIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      // Decode payload (middle part)
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final Map<String, dynamic> data = json.decode(decoded);
+
+      return data['userId'] ?? data['sub'];
+    } catch (e) {
+      print(' Error parsing JWT: $e');
+      return null;
+    }
   }
 
   @override
   void dispose() {
     _clearCurrentCards();
+    _ocrSubscription?.cancel();
     super.dispose();
   }
 
-  // --- LOGIC XỬ LÝ ẢNH & OCR ---
+  void _handleOcrWebSocketEvent(Map<String, dynamic> data) {
+    if (!mounted || _isProcessingOcrEvent) return;
+
+    _isProcessingOcrEvent = true;
+    setState(() {
+      _isWaitingForSocket = false;
+    });
+    print('📬 Processing OCR WebSocket event: $data');
+
+    _clearCurrentCards();
+
+    if (!mounted) {
+      _isProcessingOcrEvent = false;
+      return;
+    }
+
+    setState(() {
+      final cards = data['cards'] as List<dynamic>? ?? [];
+      final fullText = data['fullText'] as String? ?? '';
+
+      if (cards.isNotEmpty) {
+        // Populate cards from WebSocket event
+        print('✅ Populating ${cards.length} cards from WebSocket');
+        for (final card in cards) {
+          final front = card['front'] ?? '';
+          final back = card['back'] ?? '';
+          final kanji = card['kanji'] ?? card['front'] ?? '';
+
+          _cards.add(_createNewCard(front, kanji, back));
+        }
+      } else if (fullText.isNotEmpty) {
+        // Fallback: Parse fullText if no cards provided
+        print('⚠️ No cards in WebSocket event, parsing fullText');
+        final lines =
+            fullText.split('\n').where((l) => l.trim().isNotEmpty).toList();
+
+        for (final line in lines) {
+          final parts = line.split('-').map((e) => e.trim()).toList();
+          if (parts.length >= 2) {
+            _cards.add(_createNewCard(parts[0], parts[0], parts[1]));
+          }
+        }
+      }
+
+      // Add empty card if no cards found
+      if (_cards.isEmpty) {
+        _cards.add(_createNewCard('', '', ''));
+      }
+    });
+
+    // Show snackbar notification with mounted check
+    if (mounted) {
+      _showSuccessSnackBar(
+          'OCR hoàn thành! Đã phân tích ${_cards.length} thẻ.');
+      // Show dialog with mounted check
+      _showOcrCompleteDialog(data);
+    }
+
+    _isProcessingOcrEvent = false;
+  }
+
+  void _showOcrCompleteDialog(Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    final cardsCount = data['cards']?.length ?? _cards.length;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.rate_review_outlined,
+                color: Colors.blue, size: 32), // ✅ Đổi icon Review
+            SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                'Phân tích hoàn tất!',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'AI đã tìm thấy $cardsCount thẻ từ vựng.',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Vui lòng kiểm tra lại nội dung bên dưới và bấm "LƯU" để thêm vào bộ thẻ.', // ✅ Hướng dẫn đúng
+              style: TextStyle(color: Colors.black87),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text(
+                'Kiểm tra ngay'), // ✅ Chỉ cho phép đóng dialog để review
+          ),
+        ],
+      ),
+    );
+  } // --- LOGIC XỬ LÝ ẢNH & OCR ---
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -63,7 +260,6 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         final bytes = await picked.readAsBytes();
 
         setState(() {
-          _pickedFile = picked;
           _imageBytes = bytes;
         });
 
@@ -78,10 +274,11 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           universalFile = universal.File(picked.path);
         }
 
-        // 3. Gọi OCR Cubit
+        // 3. Gọi OCR Cubit với deckId
         if (!mounted) return;
         context.read<OcrCubit>().processImage(
               imageFile: universalFile,
+              deckId: _selectedDeckId!,
             );
       } else if (_selectedDeckId == null) {
         _showErrorSnackBar('Vui lòng chọn bộ thẻ trước khi chọn ảnh!');
@@ -94,20 +291,22 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   void _handleOcrSuccess(OcrSuccess state) {
     _clearCurrentCards();
 
-    // Debug: Kiểm tra response
-    print(
-        '📦 OCR Response - Full Text: ${state.response.fullText.substring(0, 50)}...');
-    print('📦 OCR Response - Cards count: ${state.response.cards.length}');
+    // Debug: Kiểm tra response (fix RangeError)
+    final fullText = state.response.fullText;
+    final previewText =
+        fullText.length > 50 ? fullText.substring(0, 50) : fullText;
+    print(' OCR Response - Full Text: $previewText...');
+    print(' OCR Response - Cards count: ${state.response.cards.length}');
     if (state.response.cards.isNotEmpty) {
       print(
-          '📦 First card: ${state.response.cards.first.term} | ${state.response.cards.first.kanji} | ${state.response.cards.first.meaning}');
+          ' First card: ${state.response.cards.first.term} | ${state.response.cards.first.kanji} | ${state.response.cards.first.meaning}');
     }
 
     // Sử dụng cards đã được LLM parse sẵn từ backend
     setState(() {
       if (state.response.cards.isNotEmpty) {
         // Có cards từ LLM
-        print('✅ Using ${state.response.cards.length} cards from LLM');
+        print(' Using ${state.response.cards.length} cards from LLM');
         for (final card in state.response.cards) {
           _cards.add(_createNewCard(
             card.term,
@@ -117,7 +316,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         }
       } else {
         // Fallback: Parse fullText nếu không có cards
-        print('⚠️ No cards from LLM, using fallback parsing');
+        print(' No cards from LLM, using fallback parsing');
         final lines = state.response.fullText
             .split('\n')
             .where((line) => line.trim().isNotEmpty)
@@ -189,7 +388,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         final frontText = card['term']?.text.trim() ?? '';
         final kanjiText = card['kanji']?.text.trim() ?? '';
         final backText = card['meaning']?.text.trim() ?? '';
-        
+
         return {
           'front': frontText,
           'kanji': kanjiText.isNotEmpty ? kanjiText : null, // Gửi kanji nếu có
@@ -202,12 +401,14 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   }
 
   void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
   void _showErrorSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
@@ -221,19 +422,73 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
       listeners: [
         BlocListener<CardCubit, CardState>(
           listener: (context, state) {
+            if (state is OcrSuccess) {
+              //  BỔ SUNG: Bật cờ chờ Socket để giữ Loading không bị tắt
+              setState(() {
+                _isWaitingForSocket = true;
+              });
+              print(" Upload ảnh thành công, đang chờ AI qua Socket...");
+            }
             if (state is CardsCreated) {
-              _showSuccessSnackBar('Đã lưu thẻ vào bộ học thành công!');
-              Navigator.pop(context);
+              if (!mounted) return;
+
+              // Show success dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 32),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          'Thành công!',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Đã lưu ${_cards.length} thẻ vào bộ học!',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop(); // Close dialog
+                        if (mounted) {
+                          Navigator.of(context).pop(); // Back to deck screen
+                        }
+                      },
+                      child: const Text('Đóng'),
+                    ),
+                  ],
+                ),
+              );
             }
             if (state is CardError) {
-              _showErrorSnackBar('Lỗi: ${state.message}');
+              if (mounted) {
+                _showErrorSnackBar('Lỗi: ${state.message}');
+              }
             }
           },
         ),
         BlocListener<OcrCubit, OcrState>(
           listener: (context, state) {
             if (state is OcrSuccess) {
-              _handleOcrSuccess(state);
+              print(" Upload ảnh thành công, đang chờ AI qua Socket...");
             }
             if (state is OcrError) {
               _showErrorSnackBar('Lỗi OCR: ${state.message}');
@@ -267,14 +522,23 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           // Loading Overlay Logic (Giữ nguyên)
           BlocBuilder<OcrCubit, OcrState>(
             builder: (context, ocrState) {
-              if (ocrState is OcrProcessing) {
-                return _buildLoadingOverlay('AI đang phân tích ảnh...');
-              }
               return BlocBuilder<CardCubit, CardState>(
                 builder: (context, cardState) {
+                  // 1. Đang upload ảnh (HTTP Request)
+                  if (ocrState is OcrProcessing) {
+                    return _buildLoadingOverlay('Đang tải ảnh lên...');
+                  }
+
+                  // 2. ✅ Upload xong, đang chờ AI qua Socket (Cái bạn đang thiếu)
+                  if (_isWaitingForSocket) {
+                    return _buildLoadingOverlay('AI đang phân tích ảnh...');
+                  }
+
+                  // 3. User bấm Lưu, đang lưu vào DB
                   if (cardState is CardLoading) {
                     return _buildLoadingOverlay('Đang lưu vào dữ liệu...');
                   }
+
                   return const SizedBox.shrink();
                 },
               );
@@ -480,9 +744,6 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   Widget _buildDeckSelector() {
     return BlocBuilder<DeckCubit, DeckState>(
       builder: (context, state) {
-        if (state is DeckInitial) {
-          context.read<DeckCubit>().getDecks();
-        }
         if (state is DecksLoaded) {
           if (_selectedDeckId == null && state.decks.isNotEmpty) {
             _selectedDeckId = state.decks.first.id;

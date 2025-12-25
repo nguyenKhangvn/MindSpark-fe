@@ -29,7 +29,7 @@ class TokenStorage {
     if (_prefs != null) return;
     _prefs = await SharedPreferences.getInstance();
     if (kDebugMode) {
-      print('💾 [TokenStorage] SharedPreferences initialized');
+      print(' [TokenStorage] SharedPreferences initialized');
     }
   }
 
@@ -60,12 +60,12 @@ class TokenStorage {
       await _ensurePrefs();
       await _prefs?.setString(_accessTokenKey, _encryptToken(token));
       if (kDebugMode) {
-        print('💾 [TokenStorage] Saved access token to web storage');
+        print(' [TokenStorage] Saved access token to web storage');
       }
     } else {
       await _secureStorage?.write(key: _accessTokenKey, value: token);
       if (kDebugMode) {
-        print('💾 [TokenStorage] Saved access token to secure storage');
+        print(' [TokenStorage] Saved access token to secure storage');
       }
     }
   }
@@ -78,14 +78,14 @@ class TokenStorage {
       final token = _decryptToken(encrypted);
       if (kDebugMode) {
         print(
-            '🔑 [TokenStorage] Get access token from web: ${token != null ? "Found" : "Not found"}');
+            ' [TokenStorage] Get access token from web: ${token != null ? "Found" : "Not found"}');
       }
       return token;
     } else {
       final token = await _secureStorage?.read(key: _accessTokenKey);
       if (kDebugMode) {
         print(
-            '🔑 [TokenStorage] Get access token from secure: ${token != null ? "Found" : "Not found"}');
+            ' [TokenStorage] Get access token from secure: ${token != null ? "Found" : "Not found"}');
       }
       return token;
     }
@@ -97,12 +97,12 @@ class TokenStorage {
       await _ensurePrefs();
       await _prefs?.setString(_refreshTokenKey, _encryptToken(token));
       if (kDebugMode) {
-        print('💾 [TokenStorage] Saved refresh token to web storage');
+        print(' [TokenStorage] Saved refresh token to web storage');
       }
     } else {
       await _secureStorage?.write(key: _refreshTokenKey, value: token);
       if (kDebugMode) {
-        print('💾 [TokenStorage] Saved refresh token to secure storage');
+        print(' [TokenStorage] Saved refresh token to secure storage');
       }
     }
   }
@@ -115,14 +115,14 @@ class TokenStorage {
       final token = _decryptToken(encrypted);
       if (kDebugMode) {
         print(
-            '🔑 [TokenStorage] Get refresh token from web: ${token != null ? "Found" : "Not found"}');
+            ' [TokenStorage] Get refresh token from web: ${token != null ? "Found" : "Not found"}');
       }
       return token;
     } else {
       final token = await _secureStorage?.read(key: _refreshTokenKey);
       if (kDebugMode) {
         print(
-            '🔑 [TokenStorage] Get refresh token from secure: ${token != null ? "Found" : "Not found"}');
+            ' [TokenStorage] Get refresh token from secure: ${token != null ? "Found" : "Not found"}');
       }
       return token;
     }
@@ -137,6 +137,11 @@ class TokenStorage {
       await _secureStorage?.delete(key: _accessTokenKey);
       await _secureStorage?.delete(key: _refreshTokenKey);
     }
+  }
+
+  /// Clear all tokens (alias for clearTokens)
+  Future<void> clearAll() async {
+    await clearTokens();
   }
 
   /// Check if user is authenticated

@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/stats_usecases.dart';
-import '../../domain/entities/stats_entity.dart';
 import '../../domain/entities/weekly_progress_entity.dart';
 import 'stats_state.dart';
 
@@ -38,7 +37,8 @@ class StatsCubit extends Cubit<StatsState> {
   }
 
   /// Load everything needed for the Statistics UI in one state
-  Future<void> loadOverview({int heatmapDays = 90, int topDeckLimit = 5}) async {
+  Future<void> loadOverview(
+      {int heatmapDays = 90, int topDeckLimit = 5}) async {
     emit(StatsLoading());
 
     // Start all requests concurrently, then await results with correct types.
@@ -81,12 +81,12 @@ class StatsCubit extends Cubit<StatsState> {
 
   Future<void> loadAnalytics() async {
     emit(StatsLoading());
-    
+
     // Gọi song song 3 API
     final weeklyResult = await getWeeklyProgressUseCase();
     final heatmapResult = await getActivityHeatmapUseCase(90);
     final topDecksResult = await getTopDecksUseCase(5);
-    
+
     // Kiểm tra nếu có lỗi
     if (weeklyResult.isLeft()) {
       weeklyResult.fold((error) => emit(StatsError(error)), (_) {});
@@ -100,7 +100,7 @@ class StatsCubit extends Cubit<StatsState> {
       topDecksResult.fold((error) => emit(StatsError(error)), (_) {});
       return;
     }
-    
+
     // Lấy data từ Either
     final List<WeeklyProgressEntity> weeklyData =
         weeklyResult.getOrElse(() => const <WeeklyProgressEntity>[]);
@@ -108,7 +108,7 @@ class StatsCubit extends Cubit<StatsState> {
         heatmapResult.getOrElse(() => const <ActivityHeatmapEntity>[]);
     final List<TopDeckEntity> topDecksData =
         topDecksResult.getOrElse(() => const <TopDeckEntity>[]);
-    
+
     // Nếu tất cả thành công
     emit(AnalyticsLoaded(
       weeklyProgress: weeklyData,

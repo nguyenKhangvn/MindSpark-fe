@@ -32,6 +32,8 @@ dependencies:
   image_picker: ^1.0.7
   # Text to Speech
   flutter_tts: ^4.0.2
+  # WebSocket
+  socket_io_client: ^2.0.3+1
 
 dev_dependencies:
   flutter_test:

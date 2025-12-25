@@ -19,35 +19,6 @@ class CardCubit extends Cubit<CardState> {
     required this.deleteCardUseCase,
   }) : super(CardInitial());
 
-  // Helper method để cập nhật card trong state hiện tại mà không gọi API
-  void _updateCardInCurrentState(CardEntity updatedCard) {
-    final currentState = state;
-    if (currentState is CardsLoaded) {
-      final updatedCards = currentState.cards.map((card) {
-        return card.id == updatedCard.id ? updatedCard : card;
-      }).toList();
-      emit(CardsLoaded(updatedCards, summary: currentState.summary));
-    }
-  }
-
-  // Helper method để xóa card khỏi state hiện tại mà không gọi API
-  void _removeCardFromCurrentState(String cardId) {
-    final currentState = state;
-    if (currentState is CardsLoaded) {
-      final updatedCards = currentState.cards.where((card) => card.id != cardId).toList();
-      // Cập nhật summary: giảm total xuống 1
-      final updatedSummary = currentState.summary != null
-          ? CardSummaryModel(
-              total: currentState.summary!.total - 1,
-              newCards: currentState.summary!.newCards,
-              learning: currentState.summary!.learning,
-              review: currentState.summary!.review,
-            )
-          : null;
-      emit(CardsLoaded(updatedCards, summary: updatedSummary));
-    }
-  }
-
   Future<void> getCards(String deckId) async {
     emit(CardLoading());
     final result = await getCardsUseCase(deckId);
@@ -65,8 +36,8 @@ class CardCubit extends Cubit<CardState> {
     String? kanji,
   }) async {
     emit(CardLoading());
-    final result =
-        await createCardUseCase(deckId: deckId, front: front, back: back, kanji: kanji);
+    final result = await createCardUseCase(
+        deckId: deckId, front: front, back: back, kanji: kanji);
     result.fold(
       (error) => emit(CardError(error)),
       (card) => emit(CardCreated(card)),
@@ -90,7 +61,7 @@ class CardCubit extends Cubit<CardState> {
   }) async {
     // Lưu state cũ để rollback nếu lỗi
     final previousState = state;
-    
+
     // Gọi API
     final result = await updateCardUseCase(
       cardId: cardId,
@@ -98,7 +69,7 @@ class CardCubit extends Cubit<CardState> {
       back: back,
       kanji: kanji,
     );
-    
+
     result.fold(
       (error) {
         emit(CardError(error));
@@ -121,10 +92,10 @@ class CardCubit extends Cubit<CardState> {
   Future<void> deleteCard(String cardId) async {
     // Lưu state cũ để rollback nếu lỗi
     final previousState = state;
-    
+
     // Gọi API
     final result = await deleteCardUseCase(cardId);
-    
+
     result.fold(
       (error) {
         emit(CardError(error));
@@ -132,7 +103,8 @@ class CardCubit extends Cubit<CardState> {
       (_) {
         // Xóa card khỏi danh sách hiện tại
         if (previousState is CardsLoaded) {
-          final updatedCards = previousState.cards.where((card) => card.id != cardId).toList();
+          final updatedCards =
+              previousState.cards.where((card) => card.id != cardId).toList();
           // Cập nhật summary: giảm total xuống 1
           final updatedSummary = previousState.summary != null
               ? CardSummaryModel(

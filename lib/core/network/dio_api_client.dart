@@ -7,8 +7,8 @@ import '../storage/token_storage.dart';
 class DioApiClient {
   // Allow overriding the API base URL via --dart-define=API_BASE_URL=...
   // Defaults to localhost for web; on real devices, pass your host/LAN IP.
-  static const String baseUrl =
-      String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000/api/v1');
+  static const String baseUrl = String.fromEnvironment('API_BASE_URL',
+      defaultValue: 'http://localhost:3000/api/v1');
 
   late final Dio _dio;
   final TokenStorage _tokenStorage;
@@ -43,10 +43,10 @@ class DioApiClient {
           }
 
           if (kDebugMode) {
-            print('🚀 REQUEST: ${options.method} ${options.uri}');
-            print('📤 Headers: ${options.headers}');
+            print(' REQUEST: ${options.method} ${options.uri}');
+            print(' Headers: ${options.headers}');
             if (options.data != null) {
-              print('📦 Body: ${options.data}');
+              print(' Body: ${options.data}');
             }
           }
 
@@ -57,8 +57,8 @@ class DioApiClient {
         onResponse: (response, handler) {
           if (kDebugMode) {
             print(
-                '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
-            print('📥 Data: ${response.data}');
+                ' RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+            print(' Data: ${response.data}');
           }
           handler.next(response);
         },
@@ -67,15 +67,15 @@ class DioApiClient {
         onError: (error, handler) async {
           if (kDebugMode) {
             print(
-                '❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
-            print('💥 Message: ${error.message}');
-            print('💥 Response: ${error.response?.data}');
+                ' ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
+            print(' Message: ${error.message}');
+            print(' Response: ${error.response?.data}');
           }
 
           // Handle 401 Unauthorized - Try refresh token
           if (error.response?.statusCode == 401) {
             if (kDebugMode) {
-              print('🔐 Token expired - attempting to refresh...');
+              print(' Token expired - attempting to refresh...');
             }
 
             // Try to refresh token
@@ -97,7 +97,7 @@ class DioApiClient {
                   return handler.resolve(response);
                 } catch (e) {
                   if (kDebugMode) {
-                    print('❌ Retry failed: $e');
+                    print(' Retry failed: $e');
                   }
                   return handler.next(error);
                 }
@@ -105,14 +105,14 @@ class DioApiClient {
                 // Refresh failed - clear tokens
                 await _tokenStorage.clearTokens();
                 if (kDebugMode) {
-                  print('🔐 Token refresh failed - cleared tokens');
+                  print(' Token refresh failed - cleared tokens');
                 }
               }
             } else {
               // No refresh callback - just clear tokens
               await _tokenStorage.clearTokens();
               if (kDebugMode) {
-                print('🔐 No refresh callback - cleared tokens');
+                print(' No refresh callback - cleared tokens');
               }
             }
           }

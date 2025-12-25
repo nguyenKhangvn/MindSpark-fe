@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:convert' show jsonDecode;
 import '../../network/dio_api_client.dart';
 import '../../utils/universal_file.dart';
 import '../models/ocr_models.dart';
@@ -11,72 +10,59 @@ class OcrService {
 
   OcrService(this._apiClient);
 
-  /// Process image using OCR API
-  /// Returns Either<String, OcrResponse>
-  /// Left(error) on failure, Right(response) on success
+  /// Process image using OCR API - Client-Side Upload Flow
+  /// Step 1: Get Cloudinary signature
+  /// Step 2: Upload to Cloudinary directly
+  /// Step 3: Send imageUrl to API Gateway
   Future<Either<String, OcrResponse>> processImage({
     required File imageFile,
+    required String deckId,
   }) async {
     try {
-      // Create multipart request
-      MultipartFile multipartFile;
+      print(' Starting client-side upload flow...');
 
-      if (kIsWeb) {
-        // Web: Read bytes from file
-        final bytes = await imageFile.readAsBytes();
-        final fileName = imageFile.path.split('/').last;
-        multipartFile = MultipartFile.fromBytes(
-          bytes,
-          filename: fileName,
-        );
-      } else {
-        // Mobile: Use file path
-        multipartFile = await MultipartFile.fromFile(
-          imageFile.path,
-          filename: imageFile.path.split('/').last,
-        );
+      // Step 1: Get Cloudinary upload signature
+      print('1️⃣ Getting Cloudinary signature...');
+      final signatureResponse = await _apiClient.get('/upload/signature');
+
+      if (signatureResponse.statusCode != 200) {
+        return Left('Failed to get upload signature');
       }
 
-      final formData = FormData.fromMap({
-        'file': multipartFile, // Backend mong đợi field name là 'file'
-      });
+      final signatureData = signatureResponse.data['data'];
+      print(' Signature received: ${signatureData['uploadUrl']}');
 
-      // Send POST request to OCR endpoint
-      // Quan trọng: Không set Content-Type, để Dio tự động set multipart/form-data
+      // Step 2: Upload image directly to Cloudinary
+      print('2️⃣ Uploading to Cloudinary...');
+      final imageUrl = await _uploadToCloudinary(imageFile, signatureData);
+
+      if (imageUrl == null) {
+        return Left('Failed to upload image to Cloudinary');
+      }
+
+      print(' Image uploaded: $imageUrl');
+
+      // Step 3: Send OCR request to API Gateway with imageUrl
+      print('3️⃣ Sending OCR request to API Gateway...');
       final response = await _apiClient.post(
         '/ai/ocr',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data', // Đảm bảo đúng content type
-        ),
+        data: {
+          'imageUrl': imageUrl,
+          'deckId': deckId,
+        },
       );
 
-      // Parse response
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('🔍 Raw response data: ${response.data}');
-        print('🔍 Response data type: ${response.data.runtimeType}');
+      // Parse response (202 Accepted)
+      if (response.statusCode == 202 || response.statusCode == 200) {
+        print(' OCR request accepted: ${response.data}');
 
-        // Handle case where response.data might be String instead of Map
-        Map<String, dynamic> jsonData;
-        if (response.data is String) {
-          print('⚠️ Response is String, parsing JSON...');
-          jsonData = jsonDecode(response.data);
-        } else {
-          jsonData = response.data;
-        }
-
-        print('🔍 Cards in response: ${jsonData['cards']}');
-        print('🔍 Cards count: ${(jsonData['cards'] as List?)?.length ?? 0}');
-
-        final ocrResponse = OcrResponse.fromJson(jsonData);
-        print(
-            '✅ Parsed OcrResponse - Cards count: ${ocrResponse.cards.length}');
-        if (ocrResponse.cards.isNotEmpty) {
-          print(
-              '✅ First card: ${ocrResponse.cards.first.term} | ${ocrResponse.cards.first.meaning}');
-        }
-
-        return Right(ocrResponse);
+        // Return empty response since OCR is processing async
+        // TODO: Implement WebSocket or polling to get results
+        return Right(OcrResponse(
+          fullText: 'Processing...',
+          cards: [],
+          rawOcrDetails: [],
+        ));
       } else {
         return Left(response.data['message'] ?? 'OCR processing failed');
       }
@@ -100,5 +86,57 @@ class OcrService {
       default:
         return 'Network error: ${e.message}';
     }
+  }
+}
+
+/// Upload image to Cloudinary directly
+Future<String?> _uploadToCloudinary(
+  File imageFile,
+  Map<String, dynamic> signatureData,
+) async {
+  try {
+    final dio = Dio(); // Use separate Dio instance for Cloudinary
+
+    // Prepare multipart file
+    MultipartFile multipartFile;
+    if (kIsWeb) {
+      final bytes = await imageFile.readAsBytes();
+      final fileName = imageFile.path.split('/').last;
+      multipartFile = MultipartFile.fromBytes(bytes, filename: fileName);
+    } else {
+      multipartFile = await MultipartFile.fromFile(
+        imageFile.path,
+        filename: imageFile.path.split('/').last,
+      );
+    }
+
+    // Prepare form data for Cloudinary
+    final formData = FormData.fromMap({
+      'file': multipartFile,
+      'api_key': signatureData['apiKey'],
+      'timestamp': signatureData['timestamp'],
+      'signature': signatureData['signature'],
+      'folder': signatureData['folder'],
+    });
+
+    // Upload to Cloudinary
+    final response = await dio.post(
+      signatureData['uploadUrl'],
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+        validateStatus: (status) => status! < 500,
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return response.data['secure_url'];
+    } else {
+      print(' Cloudinary upload failed: ${response.data}');
+      return null;
+    }
+  } catch (e) {
+    print(' Cloudinary upload error: $e');
+    return null;
   }
 }

@@ -290,8 +290,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         return _buildCardItem(context, cards[index], index);
                       },
                     );
-
-                    return const Center(child: CircularProgressIndicator());
                   },
                 ),
               ),

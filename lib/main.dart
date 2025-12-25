@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'core/di/injection_container.dart';
+import 'core/services/navigation_service.dart';
 import 'routes/app_router.dart';
 
 // Import all Cubits
@@ -48,6 +49,8 @@ class MindSparkApp extends StatelessWidget {
         title: 'MindSpark',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        navigatorKey:
+            sl<NavigationService>().navigatorKey, // Add global navigator key
         onGenerateRoute: AppRouter.generateRoute,
         initialRoute: AppRouter.splash, // Start with splash to check auth
       ),

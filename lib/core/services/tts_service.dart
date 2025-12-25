@@ -27,9 +27,9 @@ class TtsService {
       }
 
       _isInitialized = true;
-      print('✅ TTS Service initialized');
+      print(' TTS Service initialized');
     } catch (e) {
-      print('❌ TTS init error: $e');
+      print(' TTS init error: $e');
     }
   }
 
@@ -42,7 +42,7 @@ class TtsService {
       await _flutterTts.speak(text);
       print('🔊 Speaking Japanese: $text');
     } catch (e) {
-      print('❌ TTS Japanese error: $e');
+      print(' TTS Japanese error: $e');
     }
   }
 
@@ -55,7 +55,7 @@ class TtsService {
       await _flutterTts.speak(text);
       print('🔊 Speaking Vietnamese: $text');
     } catch (e) {
-      print('❌ TTS Vietnamese error: $e');
+      print(' TTS Vietnamese error: $e');
     }
   }
 

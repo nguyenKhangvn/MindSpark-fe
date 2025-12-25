@@ -20,7 +20,8 @@ class _CreateCardScreenState extends State<CreateCardScreen> {
   // Helper method để lấy deckId từ route arguments
   String? get _deckId {
     final args = ModalRoute.of(context)?.settings.arguments;
-    print('DEBUG: Route arguments - Type: ${args.runtimeType}, Value: $args'); // Debug
+    print(
+        'DEBUG: Route arguments - Type: ${args.runtimeType}, Value: $args'); // Debug
     if (args is String) {
       return args;
     }
@@ -39,7 +40,7 @@ class _CreateCardScreenState extends State<CreateCardScreen> {
     if (_formKey.currentState!.validate()) {
       final deckId = _deckId;
       print('DEBUG: Saving card with deckId: $deckId'); // Debug log
-      
+
       if (deckId == null || deckId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -204,9 +205,8 @@ class _CreateCardScreenState extends State<CreateCardScreen> {
   Widget _buildPreviewCard() {
     final hasKanji = _kanjiController.text.trim().isNotEmpty;
     final frontText = _frontController.text.trim();
-    final backText = _backController.text.trim();
     final kanjiText = _kanjiController.text.trim();
-    
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 200),

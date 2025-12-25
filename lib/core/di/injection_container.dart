@@ -7,7 +7,10 @@ import 'package:get_it/get_it.dart';
 
 // Core
 import '../network/dio_api_client.dart';
+import '../network/dio_client_with_interceptor.dart';
 import '../storage/token_storage.dart';
+import '../api/services/auth_service_dio.dart';
+import '../services/navigation_service.dart';
 
 // Auth
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -65,13 +68,32 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton<Dio>(() => Dio());
 
+  // Navigation service (global navigator key)
+  sl.registerLazySingleton<NavigationService>(() => NavigationService());
+
   // Core services
   // Initialize token storage (await init to ensure web prefs ready)
   final tokenStorage = TokenStorage(sl());
   await tokenStorage.init();
   sl.registerLazySingleton<TokenStorage>(() => tokenStorage);
 
-  // DioApiClient (without callback first)
+  // DioClientWithInterceptor - Auto-refresh token on 401
+  sl.registerLazySingleton<DioClientWithInterceptor>(
+    () => DioClientWithInterceptor(
+      sl<TokenStorage>(),
+      onUnauthorized: () {
+        // Navigate to login when refresh token fails
+        sl<NavigationService>().navigateToLogin();
+      },
+    ),
+  );
+
+  // AuthServiceDio - Using Dio with interceptor
+  sl.registerLazySingleton<AuthServiceDio>(
+    () => AuthServiceDio(sl(), sl()),
+  );
+
+  // DioApiClient (legacy, without callback first)
   sl.registerLazySingleton<DioApiClient>(
     () => DioApiClient(sl()),
   );
@@ -253,8 +275,9 @@ void _setupRefreshTokenCallback() {
     return result.fold(
       (error) {
         if (kDebugMode) {
-          print('🔐 Refresh token failed: $error');
+          print(' Refresh token failed: $error');
         }
+        sl<NavigationService>().navigateToLogin();
         return false; // Refresh failed
       },
       (response) => true, // Refresh success

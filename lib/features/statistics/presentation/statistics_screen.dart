@@ -187,7 +187,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           child: _buildStatCard(
             context,
             title: 'Cards Learned',
-            value: '${stats.totalCards}',
+            value: '${stats.cardsMastered}',
             color: AppColors.easy,
             icon: Icons.check_circle_outline,
           ),
@@ -489,9 +489,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   const SizedBox(width: 16),
                   _buildDeckStat(
                       'Correct', '${deck.correctAnswers}', Icons.check_circle),
-                  const SizedBox(width: 16),
-                  _buildDeckStat(
-                      'Time', '${deck.studyTimeMinutes}m', Icons.access_time),
+                //   const SizedBox(width: 16),
+                //   _buildDeckStat(
+                //       'Time', '${deck.studyTimeMinutes}m', Icons.access_time),
                 ],
               ),
             ],

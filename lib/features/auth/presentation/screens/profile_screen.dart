@@ -147,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         int totalDecks = 0;
 
                         if (statsState is UserStatsLoaded) {
-                          totalCards = statsState.stats.totalCards;
+                          totalCards = statsState.stats.cardsMastered;
                           streak = statsState.stats.streak;
                         }
 

@@ -6,7 +6,10 @@ class DeckEntity extends Equatable {
   final String name;
   final String description;
   final String userId;
-  final int cardCount;
+  final int cardCount; // Vẫn giữ nguyên là int, không cần object nested
+  final String language; // Mới
+  final String? imageUrl; // Mới (Nullable)
+  final bool isPublic; // Mới
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -16,6 +19,9 @@ class DeckEntity extends Equatable {
     required this.description,
     required this.userId,
     required this.cardCount,
+    required this.language,
+    this.imageUrl,
+    required this.isPublic,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +33,9 @@ class DeckEntity extends Equatable {
         description,
         userId,
         cardCount,
+        language,
+        imageUrl,
+        isPublic,
         createdAt,
         updatedAt,
       ];

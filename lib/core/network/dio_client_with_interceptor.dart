@@ -92,7 +92,7 @@ class DioClientWithInterceptor {
     }
 
     if (kDebugMode) {
-      debugPrint('⚠️ [Interceptor] 401 Unauthorized - Starting token refresh');
+      debugPrint(' [Interceptor] 401 Unauthorized - Starting token refresh');
     }
 
     // Prevent concurrent refresh requests
@@ -147,7 +147,7 @@ class DioClientWithInterceptor {
         final newRefreshToken = response.data['refreshToken'];
 
         if (kDebugMode) {
-          debugPrint('✅ [Interceptor] Got new tokens, saving to storage');
+          debugPrint(' [Interceptor] Got new tokens, saving to storage');
         }
 
         // Save new tokens

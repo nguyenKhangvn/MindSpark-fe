@@ -41,6 +41,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   String? _lastProcessedEventId;
 
   bool _isWaitingForSocket = false;
+  bool _isWebSocketInitialized = false; // Prevent multiple WebSocket connections
   @override
   void initState() {
     super.initState();
@@ -64,8 +65,11 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
       _selectedDeckId = args;
     }
 
-    // Initialize WebSocket connection
-    _initializeWebSocket();
+    // Initialize WebSocket connection ONCE
+    if (!_isWebSocketInitialized) {
+      _initializeWebSocket();
+      _isWebSocketInitialized = true;
+    }
   }
 
   void _initializeWebSocket() async {
@@ -85,19 +89,24 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           // Connect to WebSocket
           _socketService.connect('http://localhost:3002', userId);
 
+          // Cancel old subscription before creating new one
+          await _ocrSubscription?.cancel();
+
           // Listen to OCR finished events
           _ocrSubscription = _socketService.ocrFinishedStream.listen((data) {
-            print('📬 OCR Finished event received: $data');
-
-            // Prevent duplicate processing
-            final eventId =
-                '${data['deckId']}_${data['cardsCount']}_${data['message']}';
-            if (_lastProcessedEventId == eventId || _isProcessingOcrEvent) {
-              print('⏭️ Skipping duplicate OCR event');
-              return;
+            // Prevent duplicate processing with stricter check
+            final eventId = '${data['deckId']}_${data['cardsCount']}';
+            
+            if (_lastProcessedEventId == eventId) {
+              return; // Silently skip duplicate
+            }
+            
+            if (_isProcessingOcrEvent) {
+              return; // Still processing previous event
             }
 
             if (data['deckId'] == _selectedDeckId && mounted) {
+              print('📥 Processing OCR event: ${data['cardsCount']} cards');
               _lastProcessedEventId = eventId;
               _handleOcrWebSocketEvent(data);
             }
@@ -141,7 +150,6 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
     setState(() {
       _isWaitingForSocket = false;
     });
-    print('📬 Processing OCR WebSocket event: $data');
 
     _clearCurrentCards();
 
@@ -156,17 +164,23 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
 
       if (cards.isNotEmpty) {
         // Populate cards from WebSocket event
-        print('✅ Populating ${cards.length} cards from WebSocket');
         for (final card in cards) {
-          final front = card['front'] ?? '';
-          final back = card['back'] ?? '';
-          final kanji = card['kanji'] ?? card['front'] ?? '';
+          // Backend AI trả về format:
+          // - reading: hiragana/katakana (e.g., "みがきます")
+          // - kanji: kanji form (e.g., "磨きます")
+          // - meaning: Vietnamese meaning (e.g., "mài, đánh răng")
+          // - front: kanji (duplicate, không dùng)
+          // - back: reading + meaning (không dùng)
+          
+          final term = card['reading'] ?? '';    // ✅ Hiragana/Katakana
+          final kanji = card['kanji'] ?? '';     // ✅ Hán tự
+          final meaning = card['meaning'] ?? ''; // ✅ Nghĩa tiếng Việt
 
-          _cards.add(_createNewCard(front, kanji, back));
+          _cards.add(_createNewCard(term, kanji, meaning));
         }
+        print('✅ Loaded ${_cards.length} cards from OCR');
       } else if (fullText.isNotEmpty) {
         // Fallback: Parse fullText if no cards provided
-        print('⚠️ No cards in WebSocket event, parsing fullText');
         final lines =
             fullText.split('\n').where((l) => l.trim().isNotEmpty).toList();
 
@@ -187,7 +201,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
     // Show snackbar notification with mounted check
     if (mounted) {
       _showSuccessSnackBar(
-          'OCR hoàn thành! Đã phân tích ${_cards.length} thẻ.');
+          '✨ OCR hoàn thành! Đã phân tích ${_cards.length} thẻ.');
       // Show dialog with mounted check
       _showOcrCompleteDialog(data);
     }
@@ -206,7 +220,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         title: const Row(
           children: [
             Icon(Icons.rate_review_outlined,
-                color: Colors.blue, size: 32), // ✅ Đổi icon Review
+                color: Colors.blue, size: 32), //  Đổi icon Review
             SizedBox(width: 12),
             Flexible(
               child: Text(
@@ -230,7 +244,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Vui lòng kiểm tra lại nội dung bên dưới và bấm "LƯU" để thêm vào bộ thẻ.', // ✅ Hướng dẫn đúng
+              'Vui lòng kiểm tra lại nội dung bên dưới và bấm "LƯU" để thêm vào bộ thẻ.', //  Hướng dẫn đúng
               style: TextStyle(color: Colors.black87),
             ),
           ],
@@ -241,7 +255,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
               if (mounted) Navigator.pop(context);
             },
             child: const Text(
-                'Kiểm tra ngay'), // ✅ Chỉ cho phép đóng dialog để review
+                'Kiểm tra ngay'), //  Chỉ cho phép đóng dialog để review
           ),
         ],
       ),
@@ -529,7 +543,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                     return _buildLoadingOverlay('Đang tải ảnh lên...');
                   }
 
-                  // 2. ✅ Upload xong, đang chờ AI qua Socket (Cái bạn đang thiếu)
+                  // 2.  Upload xong, đang chờ AI qua Socket (Cái bạn đang thiếu)
                   if (_isWaitingForSocket) {
                     return _buildLoadingOverlay('AI đang phân tích ảnh...');
                   }

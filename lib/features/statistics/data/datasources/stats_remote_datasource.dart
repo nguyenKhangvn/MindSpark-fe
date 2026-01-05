@@ -43,7 +43,8 @@ class StatsRemoteDataSourceImpl implements StatsRemoteDataSource {
 
   @override
   Future<List<ActivityHeatmapModel>> getActivityHeatmap({int days = 90}) async {
-    final response = await apiClient.get('/stats/me/activity-heatmap?days=$days');
+    final response =
+        await apiClient.get('/stats/me/activity-heatmap?days=$days');
     final List<dynamic> data = response.data as List<dynamic>;
     return data
         .map((json) =>

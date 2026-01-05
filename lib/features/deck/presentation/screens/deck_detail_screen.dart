@@ -18,17 +18,22 @@ class DeckDetailScreen extends StatefulWidget {
 
 class _DeckDetailScreenState extends State<DeckDetailScreen> {
   DeckEntity? _deck;
+  // FIX: Thêm cờ đánh dấu để tránh gọi API nhiều lần
+  bool _isDataLoaded = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Get deck from navigation arguments
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is DeckEntity) {
-      _deck = args;
-      // Fetch cards for this deck
-      context.read<CardCubit>().getCards(_deck!.id);
+    // FIX: Chỉ load data nếu chưa load lần nào
+    if (!_isDataLoaded) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is DeckEntity) {
+        _deck = args;
+        // Fetch cards for this deck
+        context.read<CardCubit>().getCards(_deck!.id);
+      }
+      _isDataLoaded = true; // Đánh dấu đã load xong
     }
   }
 
@@ -51,7 +56,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () {
-              // TODO: Implement edit deck dialog
               _showEditDeckDialog(context);
             },
           ),
@@ -85,12 +89,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Cập nhật thẻ thành công!')),
               );
-              // State đã chứa allCards và summary mới - BlocBuilder sẽ tự rebuild
             } else if (cardState is CardDeleted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Đã xóa thẻ!')),
               );
-              // State đã chứa remainingCards và summary mới - BlocBuilder sẽ tự rebuild
             } else if (cardState is CardError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -105,7 +107,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               // Deck Info Header
               BlocBuilder<CardCubit, CardState>(
                 builder: (context, cardState) {
-                  // Get total from summary if available, fallback to deck.cardCount
                   int totalCards = _deck!.cardCount;
 
                   if (cardState is CardsLoaded && cardState.summary != null) {
@@ -199,7 +200,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                 },
               ),
 
-              // Card List - Real data from backend
+              // Card List
               Expanded(
                 child: BlocBuilder<CardCubit, CardState>(
                   builder: (context, cardState) {
@@ -232,7 +233,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                       );
                     }
 
-                    // Lấy cards từ các state khác nhau
                     List<CardEntity> cards = [];
 
                     if (cardState is CardsLoaded) {

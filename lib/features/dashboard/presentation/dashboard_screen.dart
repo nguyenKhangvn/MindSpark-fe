@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // Đảm bảo các đường dẫn import này đúng với project của bạn
 import '../../../core/theme/app_colors.dart';
@@ -168,6 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton.extended(
               onPressed: () {
+                // debugger();
                 Navigator.pushNamed(context, AppRouter.ocrResult);
               },
               backgroundColor: AppColors.secondary,
@@ -399,7 +401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${stats.totalCards} cards learned',
+                        '${stats.cardsMastered} cards learned',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -487,27 +489,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 '${deckEntity.cardCount} cards',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey[200],
-                    color: AppColors.primary,
-                    minHeight: 6,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${(progress * 100).toInt()}% mastered',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
-                ],
-              ),
+              // const SizedBox(height: 12),
+              // Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     LinearProgressIndicator(
+              //       value: progress,
+              //       backgroundColor: Colors.grey[200],
+              //       color: AppColors.primary,
+              //       minHeight: 6,
+              //       borderRadius: BorderRadius.circular(3),
+              //     ),
+              //     // const SizedBox(height: 4),
+              //     // Text(
+              //     //   '${(progress * 100).toInt()}% mastered',
+              //     //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              //     //         fontSize: 11,
+              //     //         color: AppColors.textSecondary,
+              //     //       ),
+              //     // ),
+              //   ],
+              // ),
             ],
           ),
         ),

@@ -3,34 +3,38 @@ import '../../domain/entities/stats_entity.dart';
 /// User Stats Model
 class UserStatsModel {
   final String userId;
-  final int totalCards;
+  final int cardsMastered; // Sửa tên cho đúng nghĩa
   final int cardsReviewed;
   final int streak;
   final double accuracy;
+  final int totalPoints; // Thêm trường này vì Backend có trả về
 
   UserStatsModel({
     required this.userId,
-    required this.totalCards,
+    required this.cardsMastered,
     required this.cardsReviewed,
     required this.streak,
     required this.accuracy,
+    required this.totalPoints,
   });
 
   factory UserStatsModel.fromJson(Map<String, dynamic> json) {
     return UserStatsModel(
       userId: json['userId'] as String? ?? '',
-      
-      // Backend trả về cardsMastered, không phải totalCards
-      totalCards: (json['cardsMastered'] as num?)?.toInt() ?? 0,
-      
-      // Backend có thể tính từ dailyStats hoặc activityLogs
+
+      // Mapping đúng key từ Backend (cardsMastered)
+      cardsMastered: (json['cardsMastered'] as num?)?.toInt() ?? 0,
+
+      // Mapping đúng key từ Backend (cardsReviewed)
       cardsReviewed: (json['cardsReviewed'] as num?)?.toInt() ?? 0,
-      
-      // Backend trả về currentStreak
+
+      // Mapping đúng key từ Backend (currentStreak)
       streak: (json['currentStreak'] as num?)?.toInt() ?? 0,
-      
-      // Accuracy cần tính từ dailyStats (correctAnswers / total)
-      // Tạm thời hardcode 0.0, cần backend tính toán
+
+      // Backend trả về 'totalPoints'
+      totalPoints: (json['totalPoints'] as num?)?.toInt() ?? 0,
+
+      // Accuracy
       accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
     );
   }
@@ -38,10 +42,11 @@ class UserStatsModel {
   UserStatsEntity toEntity() {
     return UserStatsEntity(
       userId: userId,
-      totalCards: totalCards,
+      cardsMastered: cardsMastered, // Entity cũng nên đổi tên field này
       cardsReviewed: cardsReviewed,
       streak: streak,
       accuracy: accuracy,
+      totalPoints: totalPoints,
     );
   }
 }
@@ -50,24 +55,28 @@ class UserStatsModel {
 class LeaderboardEntryModel {
   final String userId;
   final String username;
-  final int score;
+  final int totalPoints; // Đổi từ score sang totalPoints
   final int rank;
 
   LeaderboardEntryModel({
     required this.userId,
     required this.username,
-    required this.score,
+    required this.totalPoints,
     required this.rank,
   });
 
   factory LeaderboardEntryModel.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntryModel(
-      // SỬA: Phòng hờ null string
       userId: json['userId'] as String? ?? '',
-      username: json['username'] as String? ?? 'Unknown',
 
-      // SỬA: Ép kiểu an toàn về 0 nếu null
-      score: (json['score'] as num?)?.toInt() ?? 0,
+      // Xử lý username: Backend có thể lưu trong metadata hoặc bảng user riêng
+      // Ở Stats Service, ta đã lưu username vào Leaderboard document
+      username: json['username'] as String? ?? 'User',
+
+      // SỬA QUAN TRỌNG: Backend trả về 'totalPoints', không phải 'score'
+      totalPoints: (json['totalPoints'] as num?)?.toInt() ?? 0,
+
+      // Rank thường được tính toán lúc query hoặc backend trả về index
       rank: (json['rank'] as num?)?.toInt() ?? 0,
     );
   }
@@ -76,7 +85,8 @@ class LeaderboardEntryModel {
     return LeaderboardEntryEntity(
       userId: userId,
       username: username,
-      score: score,
+      totalPoints:
+          totalPoints, // Map totalPoints vào totalPoints của Entity
       rank: rank,
     );
   }

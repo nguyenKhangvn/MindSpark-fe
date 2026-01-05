@@ -10,6 +10,8 @@ class SocketService {
   IO.Socket? _socket;
   final _ocrFinishedController =
       StreamController<Map<String, dynamic>>.broadcast();
+  
+  String? _lastEventId; // Track last processed event to prevent duplicates
 
   Stream<Map<String, dynamic>> get ocrFinishedStream =>
       _ocrFinishedController.stream;
@@ -43,16 +45,23 @@ class SocketService {
     });
 
     _socket!.on('ocr_finished', (data) {
-      print('📬 Received OCR finished event: $data');
+      // Prevent duplicate events at source
+      final eventId = '${data['deckId']}_${data['cardsCount']}';
+      if (_lastEventId == eventId) {
+        return; // Silently skip duplicate
+      }
+      _lastEventId = eventId;
+      
+      print('📨 Received OCR event: ${data['cardsCount']} cards');
       _ocrFinishedController.add(Map<String, dynamic>.from(data));
     });
 
     _socket!.onDisconnect((_) {
-      print(' Socket disconnected');
+      print('❌ Socket disconnected');
     });
 
     _socket!.onError((error) {
-      print(' Socket error: $error');
+      print('❌ Socket error: $error');
     });
   }
 

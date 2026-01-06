@@ -6,6 +6,9 @@ abstract class StatsRepository {
   Future<Either<String, List<LeaderboardEntryEntity>>> getLeaderboard();
   Future<Either<String, UserStatsEntity>> getUserStats();
   Future<Either<String, List<WeeklyProgressEntity>>> getWeeklyProgress();
-  Future<Either<String, List<ActivityHeatmapEntity>>> getActivityHeatmap({int days});
-  Future<Either<String, List<TopDeckEntity>>> getTopPerformingDecks({int limit});
+  Future<Either<String, List<ActivityHeatmapEntity>>> getActivityHeatmap(
+      {int days});
+  Future<Either<String, List<TopDeckEntity>>> getTopPerformingDecks(
+      {int limit});
+  Future<Either<String, List<AchievementEntity>>> getAchievements();
 }

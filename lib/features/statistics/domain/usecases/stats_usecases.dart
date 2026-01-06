@@ -47,3 +47,12 @@ class GetTopDecksUseCase {
     return repository.getTopPerformingDecks(limit: limit);
   }
 }
+
+class GetAchievementsUseCase {
+  final StatsRepository repository;
+  GetAchievementsUseCase(this.repository);
+
+  Future<Either<String, List<AchievementEntity>>> call() {
+    return repository.getAchievements();
+  }
+}

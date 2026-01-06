@@ -9,6 +9,7 @@ class StatsCubit extends Cubit<StatsState> {
   final GetWeeklyProgressUseCase getWeeklyProgressUseCase;
   final GetActivityHeatmapUseCase getActivityHeatmapUseCase;
   final GetTopDecksUseCase getTopDecksUseCase;
+  final GetAchievementsUseCase getAchievementsUseCase;
 
   StatsCubit({
     required this.getLeaderboardUseCase,
@@ -16,6 +17,7 @@ class StatsCubit extends Cubit<StatsState> {
     required this.getWeeklyProgressUseCase,
     required this.getActivityHeatmapUseCase,
     required this.getTopDecksUseCase,
+    required this.getAchievementsUseCase,
   }) : super(StatsInitial());
 
   Future<void> getLeaderboard() async {
@@ -115,5 +117,15 @@ class StatsCubit extends Cubit<StatsState> {
       activityHeatmap: heatmapData,
       topDecks: topDecksData,
     ));
+  }
+
+  /// Get user achievements
+  Future<void> getAchievements() async {
+    emit(StatsLoading());
+    final result = await getAchievementsUseCase();
+    result.fold(
+      (error) => emit(StatsError(error)),
+      (achievements) => emit(AchievementsLoaded(achievements)),
+    );
   }
 }

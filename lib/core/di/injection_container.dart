@@ -234,6 +234,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => GetWeeklyProgressUseCase(sl()));
   sl.registerLazySingleton(() => GetActivityHeatmapUseCase(sl()));
   sl.registerLazySingleton(() => GetTopDecksUseCase(sl()));
+  sl.registerLazySingleton(() => GetAchievementsUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -243,6 +244,7 @@ Future<void> initializeDependencies() async {
       getWeeklyProgressUseCase: sl(),
       getActivityHeatmapUseCase: sl(),
       getTopDecksUseCase: sl(),
+      getAchievementsUseCase: sl(),
     ),
   );
 

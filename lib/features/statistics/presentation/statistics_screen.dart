@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/di/injection_container.dart';
 import 'cubit/stats_cubit.dart';
 import 'cubit/stats_state.dart';
 import '../domain/entities/stats_entity.dart';
 import '../domain/entities/weekly_progress_entity.dart';
+import 'pages/leaderboard_page.dart';
+import 'pages/achievements_page.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -79,6 +82,52 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeaderStats(context, stats),
+                    const SizedBox(height: 16),
+
+                    // Leaderboard & Achievements quick access
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionCard(
+                            context,
+                            title: 'Leaderboard',
+                            subtitle: 'Global Ranking',
+                            icon: Icons.leaderboard,
+                            color: Colors.purple,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BlocProvider(
+                                    create: (context) => sl<StatsCubit>(),
+                                    child: const LeaderboardPage(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildActionCard(
+                            context,
+                            title: 'Achievements',
+                            subtitle: 'My Badges',
+                            icon: Icons.emoji_events,
+                            color: Colors.amber,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AchievementsPage(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
 
                     // Learning progress summary
@@ -258,7 +307,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
       child: Column(
         children: weeklyData.map((day) {
-          final date = DateTime.parse(day.date);
+          final parts = day.date.split('-');
+          final date = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
           final dayName = [
             'Mon',
             'Tue',
@@ -489,9 +543,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   const SizedBox(width: 16),
                   _buildDeckStat(
                       'Correct', '${deck.correctAnswers}', Icons.check_circle),
-                //   const SizedBox(width: 16),
-                //   _buildDeckStat(
-                //       'Time', '${deck.studyTimeMinutes}m', Icons.access_time),
+                  //   const SizedBox(width: 16),
+                  //   _buildDeckStat(
+                  //       'Time', '${deck.studyTimeMinutes}m', Icons.access_time),
                 ],
               ),
             ],
@@ -519,6 +573,70 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   // TODO: Remove these methods once backend provides detailed analytics
+  Widget _buildActionCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.7),
+              color,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: Colors.white, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Icon(
+              Icons.arrow_forward,
+              color: Colors.white,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /*
   Widget _buildWeeklyChart(BuildContext context) {
     ...

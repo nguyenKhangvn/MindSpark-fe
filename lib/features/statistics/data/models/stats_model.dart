@@ -85,9 +85,47 @@ class LeaderboardEntryModel {
     return LeaderboardEntryEntity(
       userId: userId,
       username: username,
-      totalPoints:
-          totalPoints, // Map totalPoints vào totalPoints của Entity
+      totalPoints: totalPoints, // Map totalPoints vào totalPoints của Entity
       rank: rank,
+    );
+  }
+}
+
+/// Achievement Model
+class AchievementModel {
+  final String id;
+  final String userId;
+  final String achievementType;
+  final DateTime unlockedAt;
+  final bool notified;
+
+  AchievementModel({
+    required this.id,
+    required this.userId,
+    required this.achievementType,
+    required this.unlockedAt,
+    required this.notified,
+  });
+
+  factory AchievementModel.fromJson(Map<String, dynamic> json) {
+    return AchievementModel(
+      id: json['_id'] as String? ?? json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      achievementType: json['achievementType'] as String? ?? '',
+      unlockedAt: json['unlockedAt'] != null
+          ? DateTime.parse(json['unlockedAt'] as String)
+          : DateTime.now(),
+      notified: json['notified'] as bool? ?? false,
+    );
+  }
+
+  AchievementEntity toEntity() {
+    return AchievementEntity(
+      id: id,
+      userId: userId,
+      achievementType: achievementType,
+      unlockedAt: unlockedAt,
+      notified: notified,
     );
   }
 }

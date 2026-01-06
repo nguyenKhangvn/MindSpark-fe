@@ -8,6 +8,7 @@ abstract class StatsRemoteDataSource {
   Future<List<WeeklyProgressModel>> getWeeklyProgress();
   Future<List<ActivityHeatmapModel>> getActivityHeatmap({int days = 90});
   Future<List<TopDeckModel>> getTopPerformingDecks({int limit = 5});
+  Future<List<AchievementModel>> getAchievements();
 }
 
 class StatsRemoteDataSourceImpl implements StatsRemoteDataSource {
@@ -58,6 +59,15 @@ class StatsRemoteDataSourceImpl implements StatsRemoteDataSource {
     final List<dynamic> data = response.data as List<dynamic>;
     return data
         .map((json) => TopDeckModel.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<AchievementModel>> getAchievements() async {
+    final response = await apiClient.get('/stats/me/achievements');
+    final List<dynamic> data = response.data as List<dynamic>;
+    return data
+        .map((json) => AchievementModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 }

@@ -47,15 +47,22 @@ class AnalyticsLoaded extends StatsState {
   final List<WeeklyProgressEntity> weeklyProgress;
   final List<ActivityHeatmapEntity> activityHeatmap;
   final List<TopDeckEntity> topDecks;
-  
+
   const AnalyticsLoaded({
     required this.weeklyProgress,
     required this.activityHeatmap,
     required this.topDecks,
   });
-  
+
   @override
   List<Object?> get props => [weeklyProgress, activityHeatmap, topDecks];
+}
+
+class AchievementsLoaded extends StatsState {
+  final List<AchievementEntity> achievements;
+  const AchievementsLoaded(this.achievements);
+  @override
+  List<Object?> get props => [achievements];
 }
 
 class StatsError extends StatsState {

@@ -4,7 +4,6 @@ import '../cubit/stats_cubit.dart';
 import '../cubit/stats_state.dart';
 import '../widgets/leaderboard_card.dart';
 import '../../domain/entities/stats_entity.dart';
-import '../../../../core/di/injection_container.dart';
 
 /// Leaderboard Page - Display global ranking
 class LeaderboardPage extends StatefulWidget {

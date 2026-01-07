@@ -197,11 +197,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 const Divider(height: 1),
-                ListTile(
+                const ListTile(
                   leading:
-                      const Icon(Icons.info_outline, color: AppColors.primary),
-                  title: const Text('App Version'),
-                  subtitle: const Text('1.0.0'),
+                      Icon(Icons.info_outline, color: AppColors.primary),
+                  title: Text('App Version'),
+                  subtitle: Text('1.0.0'),
                 ),
               ],
             ),

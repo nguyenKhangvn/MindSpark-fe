@@ -37,9 +37,7 @@ class TokenStorage {
   String _encryptToken(String token) {
     final bytes = utf8.encode(token + _encryptionKey);
     final digest = sha256.convert(bytes);
-    return base64.encode(utf8.encode(token)) +
-        '.' +
-        digest.toString().substring(0, 16);
+    return '${base64.encode(utf8.encode(token))}.${digest.toString().substring(0, 16)}';
   }
 
   /// Decrypt token from web storage

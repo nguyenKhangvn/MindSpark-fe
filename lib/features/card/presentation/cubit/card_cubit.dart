@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/card_usecases.dart';
-import '../../domain/entities/card_entity.dart';
 import '../../data/models/card_summary_model.dart';
 import 'card_state.dart';
 

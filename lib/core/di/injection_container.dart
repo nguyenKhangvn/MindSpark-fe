@@ -1,5 +1,3 @@
-/// Dependency Injection Container
-/// Uses get_it for service locator pattern with Clean Architecture
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

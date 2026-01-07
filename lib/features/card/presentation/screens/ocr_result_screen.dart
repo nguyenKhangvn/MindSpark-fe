@@ -302,56 +302,6 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
     }
   }
 
-  void _handleOcrSuccess(OcrSuccess state) {
-    _clearCurrentCards();
-
-    // Debug: Kiểm tra response (fix RangeError)
-    final fullText = state.response.fullText;
-    final previewText =
-        fullText.length > 50 ? fullText.substring(0, 50) : fullText;
-    print(' OCR Response - Full Text: $previewText...');
-    print(' OCR Response - Cards count: ${state.response.cards.length}');
-    if (state.response.cards.isNotEmpty) {
-      print(
-          ' First card: ${state.response.cards.first.term} | ${state.response.cards.first.kanji} | ${state.response.cards.first.meaning}');
-    }
-
-    // Sử dụng cards đã được LLM parse sẵn từ backend
-    setState(() {
-      if (state.response.cards.isNotEmpty) {
-        // Có cards từ LLM
-        print(' Using ${state.response.cards.length} cards from LLM');
-        for (final card in state.response.cards) {
-          _cards.add(_createNewCard(
-            card.term,
-            card.kanji,
-            card.meaning,
-          ));
-        }
-      } else {
-        // Fallback: Parse fullText nếu không có cards
-        print(' No cards from LLM, using fallback parsing');
-        final lines = state.response.fullText
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .toList();
-
-        for (final line in lines) {
-          final parts = line.split(RegExp(r'[:\-–—]'));
-          final term = parts[0].trim();
-          final meaning =
-              parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
-
-          _cards.add(_createNewCard(term, term, meaning));
-        }
-      }
-
-      // Nếu không có card nào, thêm 1 card rỗng
-      if (_cards.isEmpty) {
-        _cards.add(_createNewCard('', '', ''));
-      }
-    });
-  }
 
   Map<String, TextEditingController> _createNewCard(
       String term, String kanji, String meaning) {

@@ -26,7 +26,7 @@ class OcrService {
       final signatureResponse = await _apiClient.get('/upload/signature');
 
       if (signatureResponse.statusCode != 200) {
-        return Left('Failed to get upload signature');
+        return const Left('Failed to get upload signature');
       }
 
       final signatureData = signatureResponse.data['data'];
@@ -37,7 +37,7 @@ class OcrService {
       final imageUrl = await _uploadToCloudinary(imageFile, signatureData);
 
       if (imageUrl == null) {
-        return Left('Failed to upload image to Cloudinary');
+        return const Left('Failed to upload image to Cloudinary');
       }
 
       print(' Image uploaded: $imageUrl');
@@ -57,7 +57,6 @@ class OcrService {
         print(' OCR request accepted: ${response.data}');
 
         // Return empty response since OCR is processing async
-        // TODO: Implement WebSocket or polling to get results
         return Right(OcrResponse(
           fullText: 'Processing...',
           cards: [],

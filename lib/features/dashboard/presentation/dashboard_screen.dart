@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Đảm bảo các đường dẫn import này đúng với project của bạn
 import '../../../core/theme/app_colors.dart';
 import '../../../routes/app_router.dart';
 import '../../deck/presentation/cubit/deck_cubit.dart';
@@ -443,7 +441,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDeckCard(BuildContext context, dynamic deck) {
     final deckEntity = deck;
-    final progress = deckEntity.cardCount > 0 ? 0.0 : 0.0;
 
     return Card(
       elevation: 3,

@@ -77,7 +77,8 @@ class _StudyScreenState extends State<StudyScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              Navigator.pop(context); // Go back to previous screen
+              // Return true to signal stats should refresh
+              Navigator.pop(context, true);
             },
             child: const Text('Done'),
           ),

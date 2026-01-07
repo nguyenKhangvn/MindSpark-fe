@@ -1,10 +1,10 @@
 import '../models/auth_models.dart';
-import '../../network/dio_client_with_interceptor.dart';
+import '../../network/dio_api_client.dart';
 import '../../storage/token_storage.dart';
 
-/// Auth service using Dio with automatic token refresh
+/// Auth service using Dio with callback-based token refresh
 class AuthServiceDio {
-  final DioClientWithInterceptor _dioClient;
+  final DioApiClient _dioClient;
   final TokenStorage _tokenStorage;
 
   AuthServiceDio(this._dioClient, this._tokenStorage);
@@ -15,7 +15,7 @@ class AuthServiceDio {
     required String password,
     required String username,
   }) async {
-    final response = await _dioClient.dio.post(
+    final response = await _dioClient.post(
       '/auth/register',
       data: {
         'email': email,
@@ -38,7 +38,7 @@ class AuthServiceDio {
     required String email,
     required String password,
   }) async {
-    final response = await _dioClient.dio.post(
+    final response = await _dioClient.post(
       '/auth/login',
       data: {
         'email': email,
@@ -55,9 +55,9 @@ class AuthServiceDio {
     return authResponse;
   }
 
-  /// Refresh access token (manually, though interceptor handles this automatically)
+  /// Refresh access token
   Future<AuthResponse> refreshToken(String refreshToken) async {
-    final response = await _dioClient.dio.post(
+    final response = await _dioClient.post(
       '/auth/refresh',
       data: {
         'refreshToken': refreshToken,
@@ -76,7 +76,7 @@ class AuthServiceDio {
   /// Logout user
   Future<void> logout() async {
     try {
-      await _dioClient.dio.post('/auth/logout');
+      await _dioClient.post('/auth/logout');
     } catch (e) {
       // Continue with logout even if API call fails
     } finally {
@@ -87,13 +87,13 @@ class AuthServiceDio {
 
   /// Health check for auth service
   Future<Map<String, dynamic>> healthCheck() async {
-    final response = await _dioClient.dio.get('/auth/health');
+    final response = await _dioClient.get('/auth/health');
     return response.data;
   }
 
   /// Get current user profile
   Future<User> getProfile() async {
-    final response = await _dioClient.dio.get('/auth/me');
+    final response = await _dioClient.get('/auth/me');
     return User.fromJson(response.data);
   }
 

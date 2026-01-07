@@ -16,11 +16,39 @@ class StatisticsScreen extends StatefulWidget {
   State<StatisticsScreen> createState() => _StatisticsScreenState();
 }
 
-class _StatisticsScreenState extends State<StatisticsScreen> {
+class _StatisticsScreenState extends State<StatisticsScreen>
+    with WidgetsBindingObserver, RouteAware {
+  bool _isFirstLoad = true;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadStatistics();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when returning to this screen (except first load)
+    if (!_isFirstLoad) {
+      _loadStatistics();
+    }
+    _isFirstLoad = false;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh stats when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      _loadStatistics();
+    }
   }
 
   void _loadStatistics() {
@@ -230,26 +258,54 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildHeaderStats(BuildContext context, UserStatsEntity stats) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            context,
-            title: 'Cards Learned',
-            value: '${stats.cardsMastered}',
-            color: AppColors.easy,
-            icon: Icons.check_circle_outline,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                context,
+                title: 'Cards Learned',
+                value: '${stats.cardsMastered}',
+                color: AppColors.easy,
+                icon: Icons.check_circle_outline,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                context,
+                title: 'Accuracy',
+                value: '${(stats.accuracy * 100).toInt()}%',
+                color: AppColors.primary,
+                icon: Icons.workspace_premium,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            context,
-            title: 'Accuracy',
-            value: '${(stats.accuracy * 100).toInt()}%',
-            color: AppColors.primary,
-            icon: Icons.workspace_premium,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                context,
+                title: '🔥 Day Streak',
+                value: '${stats.streak}',
+                color: Colors.orange,
+                icon: Icons.local_fire_department,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                context,
+                title: 'Total Points',
+                value: '${stats.totalPoints}',
+                color: Colors.purple,
+                icon: Icons.stars,
+              ),
+            ),
+          ],
         ),
       ],
     );

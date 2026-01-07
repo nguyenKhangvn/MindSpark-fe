@@ -155,12 +155,18 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(
+                                onPressed: () async {
+                                  // Navigate to study and wait for result
+                                  final shouldRefresh = await Navigator.pushNamed(
                                     context,
                                     AppRouter.study,
                                     arguments: _deck!.id,
                                   );
+                                  
+                                  // Refresh cards if study session completed
+                                  if (shouldRefresh == true && mounted) {
+                                    context.read<CardCubit>().getCards(_deck!.id);
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,

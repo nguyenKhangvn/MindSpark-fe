@@ -3,9 +3,16 @@ import 'package:flutter/foundation.dart';
 import '../storage/token_storage.dart';
 import '../config/api_config.dart';
 
-/// Dio client with automatic token refresh interceptor
+/// Dio API Client with automatic token refresh interceptor
 /// Handles 401 errors by refreshing tokens and retrying requests
-class DioClientWithInterceptor {
+///
+/// This is the unified Dio client used throughout the app.
+/// Features:
+/// - Automatic JWT token attachment
+/// - Auto-refresh on 401 errors
+/// - Request queuing during token refresh
+/// - Debug logging
+class DioApiClient {
   late final Dio _dio;
   final TokenStorage _tokenStorage;
   final VoidCallback? onUnauthorized;
@@ -14,7 +21,7 @@ class DioClientWithInterceptor {
   bool _isRefreshing = false;
   final List<RequestOptions> _requestQueue = [];
 
-  DioClientWithInterceptor(
+  DioApiClient(
     this._tokenStorage, {
     this.onUnauthorized,
   }) {
@@ -212,5 +219,87 @@ class DioClientWithInterceptor {
 
       return handler.reject(error);
     }
+  }
+
+  /// GET request
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await _dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  /// POST request
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await _dio.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  /// PUT request
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await _dio.put(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  /// DELETE request
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await _dio.delete(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  /// POST request without interceptors (for refresh token to avoid loop)
+  Future<Response> postWithoutInterceptor(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final dio = Dio(BaseOptions(
+      baseUrl: ApiConfig.fullBaseUrl,
+      connectTimeout: ApiConfig.connectTimeout,
+      receiveTimeout: ApiConfig.receiveTimeout,
+      sendTimeout: ApiConfig.sendTimeout,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+
+    return await dio.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+    );
   }
 }

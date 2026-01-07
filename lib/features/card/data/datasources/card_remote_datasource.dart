@@ -18,13 +18,15 @@ abstract class CardRemoteDataSource {
     required String back,
     String? kanji, // Th\u00eam kanji parameter
   });
-  Future<List<CardModel>> createCards(List<Map<String, dynamic>> cards);  Future<CardModel> updateCard({
+  Future<List<CardModel>> createCards(List<Map<String, dynamic>> cards);
+  Future<CardModel> updateCard({
     required String cardId,
     String? front,
     String? back,
     String? kanji,
   });
-  Future<void> deleteCard(String cardId);}
+  Future<void> deleteCard(String cardId);
+}
 
 class CardRemoteDataSourceImpl implements CardRemoteDataSource {
   final DioApiClient apiClient;
@@ -62,12 +64,12 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       'front': front,
       'back': back,
     };
-    
+
     // Ch\u1ec9 th\u00eam kanji n\u1ebfu c\u00f3 gi\u00e1 tr\u1ecb
     if (kanji != null && kanji.isNotEmpty) {
       data['kanji'] = kanji;
     }
-    
+
     final response = await apiClient.post('/cards', data: data);
     return CardModel.fromJson(response.data as Map<String, dynamic>);
   }
@@ -105,13 +107,13 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
     String? kanji,
   }) async {
     final data = <String, dynamic>{};
-    
+
     if (front != null) data['front'] = front;
     if (back != null) data['back'] = back;
     if (kanji != null) {
       data['kanji'] = kanji.isEmpty ? null : kanji;
     }
-    
+
     final response = await apiClient.put('/cards/$cardId', data: data);
     return CardModel.fromJson(response.data as Map<String, dynamic>);
   }

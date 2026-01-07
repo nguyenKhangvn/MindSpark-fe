@@ -4,9 +4,7 @@ import '../models/analytics_model.dart';
 
 abstract class StatsRemoteDataSource {
   Future<List<LeaderboardEntryModel>> getLeaderboard();
-  Future<UserStatsModel> getUserStats
-  
-  ();
+  Future<UserStatsModel> getUserStats();
   Future<List<WeeklyProgressModel>> getWeeklyProgress();
   Future<List<ActivityHeatmapModel>> getActivityHeatmap({int days = 90});
   Future<List<TopDeckModel>> getTopPerformingDecks({int limit = 5});

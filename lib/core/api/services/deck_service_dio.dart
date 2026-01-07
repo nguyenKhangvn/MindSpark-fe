@@ -1,25 +1,22 @@
 import '../models/deck_models.dart';
-import '../../network/dio_client_with_interceptor.dart';
+import '../../network/dio_api_client.dart';
 
-/// Deck service using Dio with automatic token refresh
-/// Migration example from old ApiClient to new DioClientWithInterceptor
+/// Deck service using Dio with callback-based token refresh
 class DeckServiceDio {
-  final DioClientWithInterceptor _dioClient;
+  final DioApiClient _dioClient;
 
   DeckServiceDio(this._dioClient);
 
   /// Get all decks for current user
-  /// Old: await _apiClient.get('/decks')
-  /// New: await _dioClient.dio.get('/decks')
   Future<List<Deck>> getDecks() async {
-    final response = await _dioClient.dio.get('/decks');
+    final response = await _dioClient.get('/decks');
 
     return (response.data as List).map((json) => Deck.fromJson(json)).toList();
   }
 
   /// Get single deck by ID
   Future<Deck> getDeck(String id) async {
-    final response = await _dioClient.dio.get('/decks/$id');
+    final response = await _dioClient.get('/decks/$id');
     return Deck.fromJson(response.data);
   }
 
@@ -29,7 +26,7 @@ class DeckServiceDio {
     String? description,
     String? languageCode,
   }) async {
-    final response = await _dioClient.dio.post(
+    final response = await _dioClient.post(
       '/decks',
       data: {
         'name': name,
@@ -47,7 +44,7 @@ class DeckServiceDio {
     String? name,
     String? description,
   }) async {
-    final response = await _dioClient.dio.put(
+    final response = await _dioClient.put(
       '/decks/$id',
       data: {
         if (name != null) 'name': name,
@@ -60,12 +57,12 @@ class DeckServiceDio {
 
   /// Delete deck
   Future<void> deleteDeck(String id) async {
-    await _dioClient.dio.delete('/decks/$id');
+    await _dioClient.delete('/decks/$id');
   }
 
   /// Get deck statistics
   Future<Map<String, dynamic>> getDeckStats(String id) async {
-    final response = await _dioClient.dio.get('/decks/$id/stats');
+    final response = await _dioClient.get('/decks/$id/stats');
     return response.data;
   }
 }

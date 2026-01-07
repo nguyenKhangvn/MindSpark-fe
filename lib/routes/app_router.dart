@@ -16,7 +16,6 @@ import '../features/card/presentation/screens/ocr_result_screen.dart';
 import '../features/study/presentation/screens/study_screen.dart';
 import '../features/statistics/presentation/statistics_screen.dart';
 import '../features/splash/splash_screen.dart';
-import '../core/test_screens/api_test_home_screen.dart';
 
 class AppRouter {
   static const String splash = '/splash';
@@ -31,14 +30,11 @@ class AppRouter {
   static const String statistics = '/statistics';
   static const String profile = '/profile';
   static const String settings = '/settings';
-  static const String apiTest = '/api-test'; // NEW: API test screen
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
-      case apiTest:
-        return MaterialPageRoute(builder: (_) => const ApiTestHomeScreen());
       case onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingScreen());
       case login:

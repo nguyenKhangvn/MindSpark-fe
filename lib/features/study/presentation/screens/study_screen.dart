@@ -57,7 +57,7 @@ class _StudyScreenState extends State<StudyScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Study Session Complete! 🎉'),
+        title: const Text('Study Session Complete! '),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

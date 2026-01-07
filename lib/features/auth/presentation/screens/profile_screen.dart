@@ -27,21 +27,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Get user profile
     context.read<AuthCubit>().getProfile();
 
-    // Get user stats
-    final authState = context.read<AuthCubit>().state;
-    String? userId;
-
-    if (authState is AuthAuthenticated) {
-      userId = authState.user.id;
-    } else if (authState is ProfileLoaded) {
-      userId = authState.user.id;
-    }
-
-    if (userId != null) {
+    // Get user stats - chỉ load nếu chưa có data (forceRefresh: false)
+    final statsState = context.read<StatsCubit>().state;
+    if (statsState is! UserStatsLoaded) {
       context.read<StatsCubit>().getUserStats();
     }
 
     // Get decks to count total
+    context.read<DeckCubit>().getDecks();
+  }
+
+  Future<void> _refreshProfileData() async {
+    // Force refresh all data
+    context.read<AuthCubit>().getProfile();
+    await context.read<StatsCubit>().refreshStats(); // Force refresh stats
     context.read<DeckCubit>().getDecks();
   }
 
@@ -93,19 +92,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             email = authState.user.email;
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Profile Header - Real data
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
+          return RefreshIndicator(
+            onRefresh: _refreshProfileData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Profile Header - Real data
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
                       CircleAvatar(
                         radius: 50,
                         backgroundColor: AppColors.primary,
@@ -254,7 +256,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );

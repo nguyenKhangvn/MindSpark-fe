@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/stats_entity.dart';
 
-/// Achievement Card Widget
+/// Achievement Card Widget with Modern Design
 class AchievementCard extends StatelessWidget {
   final AchievementEntity achievement;
 
@@ -12,90 +12,129 @@ class AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _getCategoryColor(achievement.category);
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: ListTile(
-        leading: _buildIcon(),
-        title: Text(
-          achievement.displayName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.1),
+              Colors.white,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(achievement.description),
-            const SizedBox(height: 4),
-            Text(
-              'Unlocked: ${_formatDate(achievement.unlockedAt)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          leading: _buildIcon(color),
+          title: Text(
+            achievement.displayName,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
             ),
-          ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Text(
+                achievement.descriptionText,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDate(achievement.unlockedAt),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  if (achievement.category != null) ...[
+                    const SizedBox(width: 12),
+                    Chip(
+                      label: Text(
+                        achievement.category!,
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      backgroundColor: color.withOpacity(0.2),
+                      padding: EdgeInsets.zero,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+          trailing: achievement.notified
+              ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+              : Icon(Icons.new_releases, color: color, size: 24),
         ),
-        trailing: achievement.notified
-            ? const Icon(Icons.check_circle, color: Colors.green)
-            : null,
       ),
     );
   }
 
-  Widget _buildIcon() {
-    IconData iconData;
-    Color color;
-
-    switch (achievement.achievementType) {
-      case 'FIRST_DECK':
-      case 'FIRST_CARD':
-        iconData = Icons.star;
-        color = Colors.amber;
-        break;
-      case 'MASTER_10_CARDS':
-      case 'MASTER_100_CARDS':
-      case 'MASTER_1000_CARDS':
-        iconData = Icons.school;
-        color = Colors.blue;
-        break;
-      case 'STREAK_7_DAYS':
-      case 'STREAK_30_DAYS':
-      case 'STREAK_100_DAYS':
-        iconData = Icons.local_fire_department;
-        color = Colors.orange;
-        break;
-      case 'EARLY_BIRD':
-        iconData = Icons.wb_sunny;
-        color = Colors.yellow;
-        break;
-      case 'NIGHT_OWL':
-        iconData = Icons.nightlight_round;
-        color = Colors.indigo;
-        break;
-      case 'SPEED_DEMON':
-        iconData = Icons.speed;
-        color = Colors.red;
-        break;
-      case 'DEDICATED':
-        iconData = Icons.emoji_events;
-        color = Colors.purple;
-        break;
-      default:
-        iconData = Icons.workspace_premium;
-        color = Colors.grey;
-    }
-
-    return CircleAvatar(
-      backgroundColor: color.withOpacity(0.2),
-      child: Icon(iconData, color: color),
+  Widget _buildIcon(Color color) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withOpacity(0.5), width: 2),
+      ),
+      child: Center(
+        child: Text(
+          achievement.iconEmoji,
+          style: const TextStyle(fontSize: 28),
+        ),
+      ),
     );
   }
 
+  Color _getCategoryColor(String? category) {
+    switch (category) {
+      case 'beginner':
+        return Colors.green;
+      case 'mastery':
+        return Colors.blue;
+      case 'streak':
+        return Colors.orange;
+      case 'points':
+        return Colors.purple;
+      case 'time':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
+  }
+
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return 'Today';
+    } else if (diff.inDays == 1) {
+      return 'Yesterday';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }

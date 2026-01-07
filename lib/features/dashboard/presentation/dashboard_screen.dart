@@ -32,11 +32,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // 1. Load danh sách Deck
     context.read<DeckCubit>().getDecks();
 
-    // 2. Load Stats
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthAuthenticated) {
-      context.read<StatsCubit>().getUserStats();
-    } else if (authState is ProfileLoaded) {
+    // 2. Load Stats - chỉ load nếu chưa có data (cache-first)
+    final statsState = context.read<StatsCubit>().state;
+    if (statsState is! UserStatsLoaded) {
       context.read<StatsCubit>().getUserStats();
     }
   }

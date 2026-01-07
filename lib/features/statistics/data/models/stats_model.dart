@@ -98,6 +98,10 @@ class AchievementModel {
   final String achievementType;
   final DateTime unlockedAt;
   final bool notified;
+  final String? title;
+  final String? description;
+  final String? icon;
+  final String? category;
 
   AchievementModel({
     required this.id,
@@ -105,6 +109,10 @@ class AchievementModel {
     required this.achievementType,
     required this.unlockedAt,
     required this.notified,
+    this.title,
+    this.description,
+    this.icon,
+    this.category,
   });
 
   factory AchievementModel.fromJson(Map<String, dynamic> json) {
@@ -116,6 +124,10 @@ class AchievementModel {
           ? DateTime.parse(json['unlockedAt'] as String)
           : DateTime.now(),
       notified: json['notified'] as bool? ?? false,
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      icon: json['icon'] as String?,
+      category: json['category'] as String?,
     );
   }
 
@@ -126,6 +138,10 @@ class AchievementModel {
       achievementType: achievementType,
       unlockedAt: unlockedAt,
       notified: notified,
+      title: title,
+      description: description,
+      icon: icon,
+      category: category,
     );
   }
 }

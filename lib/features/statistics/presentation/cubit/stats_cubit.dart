@@ -29,13 +29,23 @@ class StatsCubit extends Cubit<StatsState> {
     );
   }
 
-  Future<void> getUserStats() async {
+  Future<void> getUserStats({bool forceRefresh = false}) async {
+    // Skip loading if already loaded and not forcing refresh
+    if (!forceRefresh && state is UserStatsLoaded) {
+      return; // Sử dụng data đã cache
+    }
+
     emit(StatsLoading());
     final result = await getUserStatsUseCase();
     result.fold(
       (error) => emit(StatsError(error)),
       (stats) => emit(UserStatsLoaded(stats)),
     );
+  }
+
+  /// Refresh stats - force reload from API
+  Future<void> refreshStats() async {
+    await getUserStats(forceRefresh: true);
   }
 
   /// Load everything needed for the Statistics UI in one state

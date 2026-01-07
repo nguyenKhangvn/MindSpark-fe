@@ -53,6 +53,10 @@ class AchievementEntity extends Equatable {
   final String achievementType;
   final DateTime unlockedAt;
   final bool notified;
+  final String? title; // From backend metadata
+  final String? description; // From backend metadata
+  final String? icon; // From backend metadata (emoji)
+  final String? category; // From backend metadata
 
   const AchievementEntity({
     required this.id,
@@ -60,73 +64,31 @@ class AchievementEntity extends Equatable {
     required this.achievementType,
     required this.unlockedAt,
     required this.notified,
+    this.title,
+    this.description,
+    this.icon,
+    this.category,
   });
 
   @override
-  List<Object?> get props =>
-      [id, userId, achievementType, unlockedAt, notified];
+  List<Object?> get props => [
+        id,
+        userId,
+        achievementType,
+        unlockedAt,
+        notified,
+        title,
+        description,
+        icon,
+        category,
+      ];
 
-  /// Helper: Get display name for achievement type
-  String get displayName {
-    switch (achievementType) {
-      case 'FIRST_DECK':
-        return 'First Deck Created';
-      case 'FIRST_CARD':
-        return 'First Card Created';
-      case 'MASTER_10_CARDS':
-        return 'Master 10 Cards';
-      case 'MASTER_100_CARDS':
-        return 'Master 100 Cards';
-      case 'MASTER_1000_CARDS':
-        return 'Master 1000 Cards';
-      case 'STREAK_7_DAYS':
-        return '7 Day Streak';
-      case 'STREAK_30_DAYS':
-        return '30 Day Streak';
-      case 'STREAK_100_DAYS':
-        return '100 Day Streak';
-      case 'EARLY_BIRD':
-        return 'Early Bird';
-      case 'NIGHT_OWL':
-        return 'Night Owl';
-      case 'SPEED_DEMON':
-        return 'Speed Demon';
-      case 'DEDICATED':
-        return 'Dedicated Learner';
-      default:
-        return achievementType;
-    }
-  }
+  /// Helper: Get display name (use backend title or fallback)
+  String get displayName => title ?? achievementType;
 
-  /// Helper: Get description for achievement type
-  String get description {
-    switch (achievementType) {
-      case 'FIRST_DECK':
-        return 'Created your first deck';
-      case 'FIRST_CARD':
-        return 'Created your first card';
-      case 'MASTER_10_CARDS':
-        return 'Mastered 10 flashcards';
-      case 'MASTER_100_CARDS':
-        return 'Mastered 100 flashcards';
-      case 'MASTER_1000_CARDS':
-        return 'Mastered 1000 flashcards';
-      case 'STREAK_7_DAYS':
-        return 'Studied for 7 days in a row';
-      case 'STREAK_30_DAYS':
-        return 'Studied for 30 days in a row';
-      case 'STREAK_100_DAYS':
-        return 'Studied for 100 days in a row';
-      case 'EARLY_BIRD':
-        return 'Studied before 8 AM';
-      case 'NIGHT_OWL':
-        return 'Studied after 10 PM';
-      case 'SPEED_DEMON':
-        return 'Completed 50 cards in one session';
-      case 'DEDICATED':
-        return 'Studied every day for a month';
-      default:
-        return 'Achievement unlocked';
-    }
-  }
+  /// Helper: Get description text (use backend description or fallback)
+  String get descriptionText => description ?? 'Achievement unlocked';
+
+  /// Helper: Get icon emoji (use backend icon or default)
+  String get iconEmoji => icon ?? '🏆';
 }

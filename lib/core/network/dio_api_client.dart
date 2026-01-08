@@ -57,7 +57,7 @@ class DioApiClient {
         onResponse: (response, handler) {
           if (kDebugMode) {
             print(
-                '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+                ' RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
             print('📥 Data: ${response.data}');
           }
           handler.next(response);
@@ -67,15 +67,15 @@ class DioApiClient {
         onError: (error, handler) async {
           if (kDebugMode) {
             print(
-                '❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
+                ' ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
             print('💬 Message: ${error.message}');
-            print('📄 Response: ${error.response?.data}');
+            print(' Response: ${error.response?.data}');
           }
 
           // Handle 401 Unauthorized - Try refresh token
           if (error.response?.statusCode == 401) {
             if (kDebugMode) {
-              print('🔑 Token expired - attempting to refresh...');
+              print(' Token expired - attempting to refresh...');
             }
 
             // Try to refresh token
@@ -97,7 +97,7 @@ class DioApiClient {
                   return handler.resolve(response);
                 } catch (e) {
                   if (kDebugMode) {
-                    print('❌ Retry failed: $e');
+                    print(' Retry failed: $e');
                   }
                   return handler.next(error);
                 }
@@ -105,7 +105,7 @@ class DioApiClient {
                 // Refresh failed - clear tokens
                 await _tokenStorage.clearTokens();
                 if (kDebugMode) {
-                  print('🚪 Token refresh failed - cleared tokens');
+                  print(' Token refresh failed - cleared tokens');
                 }
               }
             } else {

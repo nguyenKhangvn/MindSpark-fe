@@ -263,7 +263,7 @@ void _setupRefreshTokenCallback() {
     return result.fold(
       (error) {
         if (kDebugMode) {
-          print('❌ Refresh token failed: $error');
+          print(' Refresh token failed: $error');
         }
         sl<NavigationService>().navigateToLogin();
         return false; // Refresh failed

@@ -41,7 +41,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   String? _lastProcessedEventId;
 
   bool _isWaitingForSocket = false;
-  bool _isWebSocketInitialized = false; // Prevent multiple WebSocket connections
+  bool _isWebSocketInitialized =
+      false; // Prevent multiple WebSocket connections
   @override
   void initState() {
     super.initState();
@@ -96,11 +97,11 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           _ocrSubscription = _socketService.ocrFinishedStream.listen((data) {
             // Prevent duplicate processing with stricter check
             final eventId = '${data['deckId']}_${data['cardsCount']}';
-            
+
             if (_lastProcessedEventId == eventId) {
               return; // Silently skip duplicate
             }
-            
+
             if (_isProcessingOcrEvent) {
               return; // Still processing previous event
             }
@@ -171,14 +172,14 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           // - meaning: Vietnamese meaning (e.g., "mài, đánh răng")
           // - front: kanji (duplicate, không dùng)
           // - back: reading + meaning (không dùng)
-          
-          final term = card['reading'] ?? '';    // ✅ Hiragana/Katakana
-          final kanji = card['kanji'] ?? '';     // ✅ Hán tự
-          final meaning = card['meaning'] ?? ''; // ✅ Nghĩa tiếng Việt
+
+          final term = card['reading'] ?? ''; //  Hiragana/Katakana
+          final kanji = card['kanji'] ?? ''; //  Hán tự
+          final meaning = card['meaning'] ?? ''; //  Nghĩa tiếng Việt
 
           _cards.add(_createNewCard(term, kanji, meaning));
         }
-        print('✅ Loaded ${_cards.length} cards from OCR');
+        print(' Loaded ${_cards.length} cards from OCR');
       } else if (fullText.isNotEmpty) {
         // Fallback: Parse fullText if no cards provided
         final lines =
@@ -301,7 +302,6 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
       _showErrorSnackBar('Lỗi khi chọn ảnh: $e');
     }
   }
-
 
   Map<String, TextEditingController> _createNewCard(
       String term, String kanji, String meaning) {

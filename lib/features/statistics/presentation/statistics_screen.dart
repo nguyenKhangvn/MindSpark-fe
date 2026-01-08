@@ -17,24 +17,12 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen>
-    with WidgetsBindingObserver, RouteAware {
-  bool _isFirstLoad = true;
-
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadStatistics();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Refresh data when returning to this screen (except first load)
-    if (!_isFirstLoad) {
-      _loadStatistics();
-    }
-    _isFirstLoad = false;
   }
 
   @override

@@ -49,138 +49,248 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_deck!.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        // Signal dashboard to refresh when popping
+        if (didPop) {
+          // Already popped, can't do anything
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              _showEditDeckDialog(context);
+              // Pop with refresh signal
+              Navigator.of(context).pop(true);
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              _showDeleteDeckDialog(context);
-            },
-          ),
-        ],
-      ),
-      body: BlocListener<DeckCubit, DeckState>(
-        listener: (context, state) {
-          if (state is DeckDeleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-            Navigator.of(context).pop(); // Go back after deletion
-          } else if (state is DeckError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: BlocListener<CardCubit, CardState>(
-          listener: (context, cardState) {
-            if (cardState is CardUpdated) {
+          title: Text(_deck!.name),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {
+                _showEditDeckDialog(context);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                _showDeleteDeckDialog(context);
+              },
+            ),
+          ],
+        ),
+        body: BlocListener<DeckCubit, DeckState>(
+          listener: (context, state) {
+            if (state is DeckDeleted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cập nhật thẻ thành công!')),
+                SnackBar(content: Text(state.message)),
               );
-            } else if (cardState is CardDeleted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã xóa thẻ!')),
-              );
-            } else if (cardState is CardError) {
+              Navigator.of(context).pop(); // Go back after deletion
+            } else if (state is DeckError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(cardState.message),
+                  content: Text(state.message),
                   backgroundColor: Colors.red,
                 ),
               );
             }
           },
-          child: Column(
-            children: [
-              // Deck Info Header
-              BlocBuilder<CardCubit, CardState>(
-                builder: (context, cardState) {
-                  int totalCards = _deck!.cardCount;
+          child: BlocListener<CardCubit, CardState>(
+            listener: (context, cardState) {
+              if (cardState is CardUpdated) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Cập nhật thẻ thành công!')),
+                );
+              } else if (cardState is CardDeleted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đã xóa thẻ!')),
+                );
+              } else if (cardState is CardError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(cardState.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: Column(
+              children: [
+                // Deck Info Header
+                BlocBuilder<CardCubit, CardState>(
+                  builder: (context, cardState) {
+                    int totalCards = _deck!.cardCount;
 
-                  if (cardState is CardsLoaded && cardState.summary != null) {
-                    totalCards = cardState.summary!.total;
-                  } else if (cardState is CardUpdated &&
-                      cardState.summary != null) {
-                    totalCards = cardState.summary!.total;
-                  } else if (cardState is CardDeleted &&
-                      cardState.summary != null) {
-                    totalCards = cardState.summary!.total;
-                  }
+                    if (cardState is CardsLoaded && cardState.summary != null) {
+                      totalCards = cardState.summary!.total;
+                    } else if (cardState is CardUpdated &&
+                        cardState.summary != null) {
+                      totalCards = cardState.summary!.total;
+                    } else if (cardState is CardDeleted &&
+                        cardState.summary != null) {
+                      totalCards = cardState.summary!.total;
+                    }
 
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(24),
-                        bottomRight: Radius.circular(24),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '$totalCards',
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const Text(
-                          'Total Cards',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                          ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(24),
+                          bottomRight: Radius.circular(24),
                         ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  // Navigate to study and wait for result
-                                  final shouldRefresh = await Navigator.pushNamed(
-                                    context,
-                                    AppRouter.study,
-                                    arguments: _deck!.id,
-                                  );
-                                  
-                                  // Refresh cards if study session completed
-                                  if (shouldRefresh == true && mounted) {
-                                    context.read<CardCubit>().getCards(_deck!.id);
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: AppColors.primary,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Study Now'),
-                              ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$totalCards',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
+                          ),
+                          const Text(
+                            'Total Cards',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    // Navigate to study and wait for result
+                                    final shouldRefresh =
+                                        await Navigator.pushNamed(
+                                      context,
+                                      AppRouter.study,
+                                      arguments: _deck!.id,
+                                    );
+
+                                    // Refresh cards if study session completed
+                                    if (shouldRefresh == true && mounted) {
+                                      context
+                                          .read<CardCubit>()
+                                          .getCards(_deck!.id);
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Study Now'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRouter.createCard,
+                                      arguments: _deck!.id,
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add Card'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                // Card List
+                Expanded(
+                  child: BlocBuilder<CardCubit, CardState>(
+                    builder: (context, cardState) {
+                      if (cardState is CardLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (cardState is CardError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  size: 64, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error: ${cardState.message}',
+                                style: const TextStyle(color: Colors.red),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  context.read<CardCubit>().getCards(_deck!.id);
+                                },
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      List<CardEntity> cards = [];
+
+                      if (cardState is CardsLoaded) {
+                        cards = cardState.cards;
+                      } else if (cardState is CardUpdated) {
+                        cards = cardState.allCards;
+                      } else if (cardState is CardDeleted) {
+                        cards = cardState.remainingCards;
+                      }
+
+                      if (cards.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.credit_card_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No cards yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Add cards to start learning',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton.icon(
                                 onPressed: () {
                                   Navigator.pushNamed(
                                     context,
@@ -188,118 +298,26 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                     arguments: _deck!.id,
                                   );
                                 },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  side: const BorderSide(color: Colors.white),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                ),
                                 icon: const Icon(Icons.add),
                                 label: const Text('Add Card'),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                            ],
+                          ),
+                        );
+                      }
 
-              // Card List
-              Expanded(
-                child: BlocBuilder<CardCubit, CardState>(
-                  builder: (context, cardState) {
-                    if (cardState is CardLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (cardState is CardError) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline,
-                                size: 64, color: Colors.red),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Error: ${cardState.message}',
-                              style: const TextStyle(color: Colors.red),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.read<CardCubit>().getCards(_deck!.id);
-                              },
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: cards.length,
+                        itemBuilder: (context, index) {
+                          return _buildCardItem(context, cards[index], index);
+                        },
                       );
-                    }
-
-                    List<CardEntity> cards = [];
-
-                    if (cardState is CardsLoaded) {
-                      cards = cardState.cards;
-                    } else if (cardState is CardUpdated) {
-                      cards = cardState.allCards;
-                    } else if (cardState is CardDeleted) {
-                      cards = cardState.remainingCards;
-                    }
-
-                    if (cards.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.credit_card_outlined,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No cards yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Add cards to start learning',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRouter.createCard,
-                                  arguments: _deck!.id,
-                                );
-                              },
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add Card'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: cards.length,
-                      itemBuilder: (context, index) {
-                        return _buildCardItem(context, cards[index], index);
-                      },
-                    );
-                  },
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -377,6 +395,21 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     name: nameController.text,
                     description: descController.text,
                   );
+              // Update local deck info immediately for UI
+              setState(() {
+                _deck = DeckEntity(
+                  id: _deck!.id,
+                  name: nameController.text,
+                  description: descController.text,
+                  userId: _deck!.userId,
+                  cardCount: _deck!.cardCount,
+                  language: _deck!.language,
+                  imageUrl: _deck!.imageUrl,
+                  isPublic: _deck!.isPublic,
+                  createdAt: _deck!.createdAt,
+                  updatedAt: _deck!.updatedAt,
+                );
+              });
               Navigator.pop(dialogContext);
             },
             child: const Text('Save'),

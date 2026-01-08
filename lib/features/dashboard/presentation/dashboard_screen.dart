@@ -17,24 +17,38 @@ class DashboardScreen extends StatefulWidget {
 }
 
 // ĐÂY LÀ CLASS BẠN ĐANG TÌM:
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
+  bool _isFirstLoad = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadDashboardData();
   }
 
-  void _loadDashboardData() {
-    // 1. Load danh sách Deck
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      _loadDashboardData(forceRefresh: true);
+    }
+  }
+
+  void _loadDashboardData({bool forceRefresh = false}) {
+    // 1. Load danh sách Deck - always refresh
     context.read<DeckCubit>().getDecks();
 
-    // 2. Load Stats - chỉ load nếu chưa có data (cache-first)
-    final statsState = context.read<StatsCubit>().state;
-    if (statsState is! UserStatsLoaded) {
-      context.read<StatsCubit>().getUserStats();
-    }
+    // 2. Load Stats - force refresh to get latest data
+    context.read<StatsCubit>().getUserStats(forceRefresh: true);
   }
 
   // --- [LOGIC MỚI] Hàm hiển thị Dialog tạo Deck ---
@@ -184,6 +198,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildHomeTab(BuildContext context) {
+    // Reload data when switching back to home tab (except first load)
+    if (!_isFirstLoad && _currentIndex == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadDashboardData(forceRefresh: true);
+      });
+    }
+    if (_isFirstLoad) {
+      _isFirstLoad = false;
+    }
+
     return SafeArea(
       child: CustomScrollView(
         slivers: [
@@ -446,12 +470,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: () {
-          Navigator.pushNamed(
+        onTap: () async {
+          // Wait for result from deck detail
+          final shouldRefresh = await Navigator.pushNamed(
             context,
             AppRouter.deckDetail,
             arguments: deckEntity,
           );
+          
+          // Refresh if deck was modified
+          if (shouldRefresh == true && mounted) {
+            _loadDashboardData(forceRefresh: true);
+          }
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -517,11 +547,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       currentIndex: _currentIndex,
       onTap: (index) {
         if (index == 1) {
-          Navigator.pushNamed(context, AppRouter.statistics);
+          // Navigate to stats and reload when coming back
+          Navigator.pushNamed(context, AppRouter.statistics).then((_) {
+            // Reload data when returning from stats
+            _loadDashboardData(forceRefresh: true);
+          });
         } else {
           setState(() {
             _currentIndex = index;
           });
+          // If switching to home tab, mark for reload
+          if (index == 0) {
+            _isFirstLoad = false;
+          }
         }
       },
       selectedItemColor: AppColors.primary,

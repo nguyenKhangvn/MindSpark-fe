@@ -80,7 +80,7 @@ class DioApiClient {
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
       if (kDebugMode) {
-        debugPrint('🔑 [Interceptor] Attached access token');
+        debugPrint(' [Interceptor] Attached access token');
       }
     }
 
@@ -128,7 +128,7 @@ class DioApiClient {
         // Navigate to login screen
         if (onUnauthorized != null) {
           if (kDebugMode) {
-            debugPrint('🚪 [Interceptor] Triggering navigation to login');
+            debugPrint(' [Interceptor] Triggering navigation to login');
           }
           onUnauthorized!();
         }
@@ -138,7 +138,7 @@ class DioApiClient {
 
       if (kDebugMode) {
         debugPrint('🔄 [Interceptor] Calling /auth/refresh endpoint');
-        debugPrint('🔑 [Interceptor] Using refresh token from storage');
+        debugPrint(' [Interceptor] Using refresh token from storage');
       }
 
       // Call refresh endpoint (use separate Dio to avoid infinite loop)
@@ -201,7 +201,7 @@ class DioApiClient {
     } catch (e) {
       if (kDebugMode) {
         debugPrint(' [Interceptor] Refresh failed: $e');
-        debugPrint('🚪 [Interceptor] Clearing tokens - User must login again');
+        debugPrint(' [Interceptor] Clearing tokens - User must login again');
       }
 
       // Refresh failed, clear all tokens
@@ -212,7 +212,7 @@ class DioApiClient {
       // Navigate to login screen
       if (onUnauthorized != null) {
         if (kDebugMode) {
-          debugPrint('🚪 [Interceptor] Triggering navigation to login');
+          debugPrint(' [Interceptor] Triggering navigation to login');
         }
         onUnauthorized!();
       }

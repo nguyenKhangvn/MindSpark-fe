@@ -20,7 +20,16 @@ import 'package:mindspark/features/ocr/presentation/cubit/ocr_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class OcrResultScreen extends StatefulWidget {
-  const OcrResultScreen({super.key});
+  final String? initialDeckId;
+  final List<dynamic>? initialCards;
+  final String? ocrHistoryId;
+
+  const OcrResultScreen({
+    super.key,
+    this.initialDeckId,
+    this.initialCards,
+    this.ocrHistoryId,
+  });
 
   @override
   State<OcrResultScreen> createState() => _OcrResultScreenState();
@@ -39,6 +48,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   String? _selectedDeckId;
   bool _isProcessingOcrEvent = false;
   String? _lastProcessedEventId;
+  String?
+      _currentOcrHistoryId; // Lưu ID OCR history để mark complete sau khi save
 
   bool _isWaitingForSocket = false;
   bool _isWebSocketInitialized =
@@ -47,14 +58,27 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   void initState() {
     super.initState();
 
+    // Nếu có dữ liệu từ history, load ngay
+    if (widget.initialCards != null && widget.initialCards!.isNotEmpty) {
+      _selectedDeckId = widget.initialDeckId;
+      _currentOcrHistoryId = widget.ocrHistoryId;
+
+      for (final card in widget.initialCards!) {
+        final cardMap = card as Map<String, dynamic>;
+        // AI trả về format: reading, kanji, meaning
+        _cards.add(_createNewCard(
+          cardMap['reading'] ?? cardMap['front'] ?? '',
+          cardMap['kanji'] ?? cardMap['front'] ?? '',
+          cardMap['meaning'] ?? cardMap['back'] ?? '',
+        ));
+      }
+    }
+
     // ĐÚNG: Gọi API 1 lần duy nhất khi màn hình mở lên
     // Dùng addPostFrameCallback để đảm bảo context đã sẵn sàng
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final deckCubit = context.read<DeckCubit>();
-      // Chỉ gọi nếu chưa có dữ liệu (để tránh load lại nếu đã có)
-      if (deckCubit.state is DeckInitial) {
-        deckCubit.getDecks();
-      }
+      // Sử dụng cache - chỉ load nếu chưa có data
+      context.read<DeckCubit>().getDecks(forceRefresh: false);
     });
   }
 
@@ -150,6 +174,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
     _isProcessingOcrEvent = true;
     setState(() {
       _isWaitingForSocket = false;
+      // Lưu ocrHistoryId từ socket payload
+      _currentOcrHistoryId = data['ocrHistoryId'] as String?;
     });
 
     _clearCurrentCards();
@@ -396,6 +422,14 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             if (state is CardsCreated) {
               if (!mounted) return;
 
+              // Nếu có ocrHistoryId, mark complete
+              if (_currentOcrHistoryId != null) {
+                context
+                    .read<OcrCubit>()
+                    .markOcrHistoryComplete(_currentOcrHistoryId!);
+                _currentOcrHistoryId = null; // Reset sau khi mark
+              }
+
               // Show success dialog
               showDialog(
                 context: context,
@@ -581,14 +615,19 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Kết quả phân tích (${_cards.length})',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          Expanded(
+            child: Text(
+              'Kết quả phân tích (${_cards.length})',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ),
           TextButton.icon(
             onPressed: _addEmptyCard,
-            icon: const Icon(Icons.add),
-            label: const Text('Thêm thẻ'),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Thêm'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
           )
         ],
       ),

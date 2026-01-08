@@ -245,7 +245,10 @@ Future<void> initializeDependencies() async {
 
   // Cubit
   sl.registerFactory(
-    () => OcrCubit(processImageUseCase: sl()),
+    () => OcrCubit(
+      processImageUseCase: sl(),
+      apiClient: sl(),
+    ),
   );
 
   // ===== TTS Service =====

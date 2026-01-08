@@ -28,20 +28,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.read<AuthCubit>().getProfile();
 
     // Get user stats - chỉ load nếu chưa có data (forceRefresh: false)
-    final statsState = context.read<StatsCubit>().state;
-    if (statsState is! UserStatsLoaded) {
-      context.read<StatsCubit>().getUserStats();
-    }
+    context.read<StatsCubit>().getUserStats(forceRefresh: false);
 
-    // Get decks to count total
-    context.read<DeckCubit>().getDecks();
+    // Get decks - chỉ load nếu chưa có data
+    context.read<DeckCubit>().getDecks(forceRefresh: false);
   }
 
   Future<void> _refreshProfileData() async {
     // Force refresh all data
     context.read<AuthCubit>().getProfile();
-    await context.read<StatsCubit>().refreshStats(); // Force refresh stats
-    context.read<DeckCubit>().getDecks();
+    await context.read<StatsCubit>().getUserStats(forceRefresh: true);
+    await context.read<DeckCubit>().getDecks(forceRefresh: true);
   }
 
   @override
@@ -108,156 +105,159 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Column(
                       children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppColors.primary,
-                        child: Text(
-                          username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            username.isNotEmpty
+                                ? username[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        username,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 16),
+                        Text(
+                          username,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          email,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Stats Cards - Real data from backend
-                BlocBuilder<StatsCubit, StatsState>(
-                  builder: (context, statsState) {
-                    return BlocBuilder<DeckCubit, DeckState>(
-                      builder: (context, deckState) {
-                        int totalCards = 0;
-                        int streak = 0;
-                        int totalDecks = 0;
+                  // Stats Cards - Real data from backend
+                  BlocBuilder<StatsCubit, StatsState>(
+                    builder: (context, statsState) {
+                      return BlocBuilder<DeckCubit, DeckState>(
+                        builder: (context, deckState) {
+                          int totalCards = 0;
+                          int streak = 0;
+                          int totalDecks = 0;
 
-                        if (statsState is UserStatsLoaded) {
-                          totalCards = statsState.stats.cardsMastered;
-                          streak = statsState.stats.streak;
-                        }
+                          if (statsState is UserStatsLoaded) {
+                            totalCards = statsState.stats.cardsMastered;
+                            streak = statsState.stats.streak;
+                          }
 
-                        if (deckState is DecksLoaded) {
-                          totalDecks = deckState.decks.length;
-                        }
+                          if (deckState is DecksLoaded) {
+                            totalDecks = deckState.decks.length;
+                          }
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                context,
-                                icon: Icons.school_outlined,
-                                value: '$totalCards',
-                                label: 'Cards\nLearned',
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  context,
+                                  icon: Icons.school_outlined,
+                                  value: '$totalCards',
+                                  label: 'Cards\nLearned',
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                context,
-                                icon: Icons.local_fire_department,
-                                value: '$streak',
-                                label: 'Day\nStreak',
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  context,
+                                  icon: Icons.local_fire_department,
+                                  value: '$streak',
+                                  label: 'Day\nStreak',
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                context,
-                                icon: Icons.folder_outlined,
-                                value: '$totalDecks',
-                                label: 'Total\nDecks',
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  context,
+                                  icon: Icons.folder_outlined,
+                                  value: '$totalDecks',
+                                  label: 'Total\nDecks',
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Menu Items
-                _buildMenuItem(
-                  context,
-                  icon: Icons.workspace_premium,
-                  title: 'Upgrade to Premium',
-                  subtitle: 'Unlock all features',
-                  color: AppColors.secondary,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Premium feature coming soon')),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.edit_outlined,
-                  title: 'Edit Profile',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Edit profile feature coming soon')),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.history,
-                  title: 'Study History',
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRouter.statistics);
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.help_outline,
-                  title: 'Help & Support',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help feature coming soon')),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.info_outline,
-                  title: 'About',
-                  onTap: () {
-                    _showAboutDialog(context);
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.logout,
-                  title: 'Logout',
-                  color: Colors.red,
-                  onTap: () {
-                    _showLogoutDialog(context);
-                  },
-                ),
-              ],
+                  // Menu Items
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.workspace_premium,
+                    title: 'Upgrade to Premium',
+                    subtitle: 'Unlock all features',
+                    color: AppColors.secondary,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Premium feature coming soon')),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.edit_outlined,
+                    title: 'Edit Profile',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Edit profile feature coming soon')),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.history,
+                    title: 'Study History',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRouter.statistics);
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.help_outline,
+                    title: 'Help & Support',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Help feature coming soon')),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.info_outline,
+                    title: 'About',
+                    onTap: () {
+                      _showAboutDialog(context);
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.logout,
+                    title: 'Logout',
+                    color: Colors.red,
+                    onTap: () {
+                      _showLogoutDialog(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
         },
       ),
     );

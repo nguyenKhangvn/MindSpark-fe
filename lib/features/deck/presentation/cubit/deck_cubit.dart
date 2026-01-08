@@ -15,8 +15,13 @@ class DeckCubit extends Cubit<DeckState> {
     required this.deleteDeckUseCase,
   }) : super(DeckInitial());
 
-  /// Get all decks
-  Future<void> getDecks() async {
+  /// Get all decks with cache support
+  Future<void> getDecks({bool forceRefresh = false}) async {
+    // Skip loading if already loaded and not forcing refresh
+    if (!forceRefresh && state is DecksLoaded) {
+      return; // Sử dụng data đã cache
+    }
+
     emit(DeckLoading());
 
     final result = await getDecksUseCase();

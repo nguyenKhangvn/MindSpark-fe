@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/network/dio_api_client.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../routes/app_router.dart';
 import '../../deck/presentation/cubit/deck_cubit.dart';
 import '../../deck/presentation/cubit/deck_state.dart';
@@ -8,6 +10,7 @@ import '../../statistics/presentation/cubit/stats_cubit.dart';
 import '../../statistics/presentation/cubit/stats_state.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../../auth/presentation/cubit/auth_state.dart';
+import '../../card/presentation/screens/ocr_result_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,6 +30,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadDashboardData();
+
+    // Kiểm tra OCR pending sau khi frame đầu render xong
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPendingOcr();
+    });
   }
 
   @override
@@ -44,11 +52,72 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _loadDashboardData({bool forceRefresh = false}) {
-    // 1. Load danh sách Deck - always refresh
-    context.read<DeckCubit>().getDecks();
+    // 1. Load danh sách Deck - chỉ refresh khi forceRefresh = true
+    context.read<DeckCubit>().getDecks(forceRefresh: forceRefresh);
 
-    // 2. Load Stats - force refresh to get latest data
-    context.read<StatsCubit>().getUserStats(forceRefresh: true);
+    // 2. Load Stats - chỉ refresh khi forceRefresh = true
+    context.read<StatsCubit>().getUserStats(forceRefresh: forceRefresh);
+  }
+
+  /// Kiểm tra xem có OCR pending nào chưa hoàn thành không
+  void _checkPendingOcr() async {
+    try {
+      final apiClient = sl<DioApiClient>();
+      final response = await apiClient.get('/ocr-callback/pending');
+
+      if (response.statusCode == 200 && response.data['count'] > 0) {
+        final List results = response.data['results'];
+        final latestResult = results.first;
+
+        if (!mounted) return;
+
+        // Hiện dialog hỏi user
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Kết quả OCR đã xong'),
+            content: Text(
+              'Bạn có 1 yêu cầu quét ảnh cho bộ thẻ "${latestResult['deck']['name']}" chưa được lưu. Bạn có muốn xem lại không?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child:
+                    const Text('Bỏ qua', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _navigateToResultScreen(latestResult);
+                },
+                child: const Text('Xem ngay'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('⚠️ Lỗi check pending OCR: $e');
+    }
+  }
+
+  /// Navigate sang màn hình OCR Result với dữ liệu từ history
+  void _navigateToResultScreen(Map<String, dynamic> historyData) {
+    final List<dynamic> cards = historyData['resultData'] as List<dynamic>;
+    final deckId = historyData['deckId'] as String;
+    final historyId = historyData['id'] as String;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OcrResultScreen(
+          initialDeckId: deckId,
+          initialCards: cards,
+          ocrHistoryId: historyId,
+        ),
+      ),
+    );
   }
 
   // --- [LOGIC MỚI] Hàm hiển thị Dialog tạo Deck ---
@@ -477,7 +546,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             AppRouter.deckDetail,
             arguments: deckEntity,
           );
-          
+
           // Refresh if deck was modified
           if (shouldRefresh == true && mounted) {
             _loadDashboardData(forceRefresh: true);

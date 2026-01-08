@@ -33,3 +33,27 @@ class OcrError extends OcrState {
   @override
   List<Object?> get props => [message];
 }
+
+/// Loading pending OCR histories
+class OcrPendingLoading extends OcrState {}
+
+/// Pending OCR histories loaded successfully
+class OcrPendingLoaded extends OcrState {
+  final List<dynamic> pendingHistories; // List of OcrHistoryModel
+  final int count;
+
+  const OcrPendingLoaded(this.pendingHistories, this.count);
+
+  @override
+  List<Object?> get props => [pendingHistories, count];
+}
+
+/// OCR history marked as completed
+class OcrHistoryCompleted extends OcrState {
+  final String historyId;
+
+  const OcrHistoryCompleted(this.historyId);
+
+  @override
+  List<Object?> get props => [historyId];
+}

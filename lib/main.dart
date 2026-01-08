@@ -11,6 +11,7 @@ import 'features/deck/presentation/cubit/deck_cubit.dart';
 import 'features/card/presentation/cubit/card_cubit.dart';
 import 'features/study/presentation/cubit/study_cubit.dart';
 import 'features/statistics/presentation/cubit/stats_cubit.dart';
+import 'features/ocr/presentation/cubit/ocr_cubit.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -43,6 +44,9 @@ class MindSparkApp extends StatelessWidget {
         ),
         BlocProvider<StatsCubit>(
           create: (context) => sl<StatsCubit>(),
+        ),
+        BlocProvider<OcrCubit>(
+          create: (context) => sl<OcrCubit>(),
         ),
       ],
       child: MaterialApp(

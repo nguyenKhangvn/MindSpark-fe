@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/api/services/ocr_service.dart';
 import '../../../../core/utils/universal_file.dart';
+import '../../domain/usecases/process_image_usecase.dart';
 import 'ocr_state.dart';
 
 class OcrCubit extends Cubit<OcrState> {
-  final OcrService _ocrService;
+  final ProcessImageUseCase processImageUseCase;
 
-  OcrCubit(this._ocrService) : super(OcrInitial());
+  OcrCubit({required this.processImageUseCase}) : super(OcrInitial());
 
   /// Process image using OCR API
   Future<void> processImage({
@@ -15,7 +15,7 @@ class OcrCubit extends Cubit<OcrState> {
   }) async {
     emit(OcrProcessing());
 
-    final result = await _ocrService.processImage(
+    final result = await processImageUseCase(
       imageFile: imageFile,
       deckId: deckId,
     );

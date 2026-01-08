@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../../core/api/models/ocr_models.dart';
+import '../../domain/entities/ocr_entity.dart';
 
 abstract class OcrState extends Equatable {
   const OcrState();
@@ -16,7 +16,7 @@ class OcrProcessing extends OcrState {}
 
 /// OCR completed successfully - cards extracted
 class OcrSuccess extends OcrState {
-  final OcrResponse response;
+  final OcrResponseEntity response;
 
   const OcrSuccess(this.response);
 

@@ -6,7 +6,6 @@ import 'package:get_it/get_it.dart';
 // Core
 import '../network/dio_api_client.dart';
 import '../storage/token_storage.dart';
-import '../api/services/auth_service_dio.dart';
 import '../services/navigation_service.dart';
 
 // Auth
@@ -45,7 +44,10 @@ import '../../features/statistics/domain/usecases/stats_usecases.dart';
 import '../../features/statistics/presentation/cubit/stats_cubit.dart';
 
 // OCR
-import '../api/services/ocr_service.dart';
+import '../../features/ocr/data/datasources/ocr_remote_datasource.dart';
+import '../../features/ocr/data/repositories/ocr_repository_impl.dart';
+import '../../features/ocr/domain/repositories/ocr_repository.dart';
+import '../../features/ocr/domain/usecases/process_image_usecase.dart';
 import '../../features/ocr/presentation/cubit/ocr_cubit.dart';
 
 // Services
@@ -77,11 +79,6 @@ Future<void> initializeDependencies() async {
   // DioApiClient - Dio client with callback-based refresh
   sl.registerLazySingleton<DioApiClient>(
     () => DioApiClient(sl()),
-  );
-
-  // AuthServiceDio - Using Dio client
-  sl.registerLazySingleton<AuthServiceDio>(
-    () => AuthServiceDio(sl(), sl()),
   );
 
   // ===== Auth Feature =====
@@ -233,14 +230,22 @@ Future<void> initializeDependencies() async {
 
   // ===== OCR Feature =====
 
-  // Service (no repository needed - direct API call)
-  sl.registerLazySingleton<OcrService>(
-    () => OcrService(sl()),
+  // Data sources
+  sl.registerLazySingleton<OcrRemoteDataSource>(
+    () => OcrRemoteDataSourceImpl(sl()),
   );
+
+  // Repositories
+  sl.registerLazySingleton<OcrRepository>(
+    () => OcrRepositoryImpl(sl()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => ProcessImageUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
-    () => OcrCubit(sl()),
+    () => OcrCubit(processImageUseCase: sl()),
   );
 
   // ===== TTS Service =====

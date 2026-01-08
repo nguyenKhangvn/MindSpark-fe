@@ -47,7 +47,7 @@ class DioApiClient {
         responseHeader: false,
         responseBody: true,
         error: true,
-        logPrint: (obj) => debugPrint('🌐 [Dio] $obj'),
+        logPrint: (obj) => debugPrint(' [Dio] $obj'),
       ));
     }
 
@@ -174,7 +174,7 @@ class DioApiClient {
         if (_requestQueue.isNotEmpty) {
           if (kDebugMode) {
             debugPrint(
-                '📋 [Interceptor] Processing ${_requestQueue.length} queued requests');
+                ' [Interceptor] Processing ${_requestQueue.length} queued requests');
           }
 
           for (var queuedRequest in _requestQueue) {

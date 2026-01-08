@@ -87,8 +87,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         final userId = _parseUserIdFromToken(accessToken);
 
         if (userId != null) {
-          // Connect to WebSocket
-          _socketService.connect('http://localhost:3002', userId);
+          // Connect to WebSocket với token authentication
+          _socketService.connect('http://localhost:3002', userId, accessToken);
 
           // Cancel old subscription before creating new one
           await _ocrSubscription?.cancel();
@@ -107,7 +107,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             }
 
             if (data['deckId'] == _selectedDeckId && mounted) {
-              print('📥 Processing OCR event: ${data['cardsCount']} cards');
+              print(' Processing OCR event: ${data['cardsCount']} cards');
               _lastProcessedEventId = eventId;
               _handleOcrWebSocketEvent(data);
             }

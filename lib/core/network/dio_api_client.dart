@@ -43,8 +43,8 @@ class DioApiClient {
           }
 
           if (kDebugMode) {
-            print('🌐 REQUEST: ${options.method} ${options.uri}');
-            print('📋 Headers: ${options.headers}');
+            print(' REQUEST: ${options.method} ${options.uri}');
+            print(' Headers: ${options.headers}');
             if (options.data != null) {
               print('📦 Body: ${options.data}');
             }
@@ -58,7 +58,7 @@ class DioApiClient {
           if (kDebugMode) {
             print(
                 ' RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
-            print('📥 Data: ${response.data}');
+            print(' Data: ${response.data}');
           }
           handler.next(response);
         },
@@ -112,7 +112,7 @@ class DioApiClient {
               // No refresh callback - just clear tokens
               await _tokenStorage.clearTokens();
               if (kDebugMode) {
-                print('⚠️ No refresh callback - cleared tokens');
+                print(' No refresh callback - cleared tokens');
               }
             }
           }

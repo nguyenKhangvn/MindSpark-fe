@@ -9,8 +9,8 @@ class DioApiClient {
   static String get _defaultBaseUrl {
     if (kIsWeb) return 'http://localhost:3000/api/v1';
     if (Platform.isAndroid)
-      return 'http://10.0.2.2:3002/api/v1'; // Android Emulator
-    return 'http://localhost:3002/api/v1'; // iOS Simulator / Others
+      return 'http://10.0.2.2:3000/api/v1'; // ✅ FIX: Gateway port 3000
+    return 'http://localhost:3000/api/v1'; // ✅ FIX: Gateway port 3000
   }
 
   // Ưu tiên biến môi trường nếu có
@@ -21,6 +21,9 @@ class DioApiClient {
   final TokenStorage _tokenStorage;
 
   Future<bool> Function()? onRefreshToken;
+
+  // Flag to prevent concurrent refresh attempts
+  bool _isRefreshing = false;
 
   DioApiClient(this._tokenStorage) {
     // Logic chọn URL
@@ -76,27 +79,47 @@ class DioApiClient {
 
           // Handle 401 Unauthorized
           if (error.response?.statusCode == 401) {
+            // Prevent concurrent refresh attempts
+            if (_isRefreshing) {
+              if (kDebugMode)
+                print('⏳ Refresh already in progress, rejecting request');
+              return handler.next(error);
+            }
+
             if (onRefreshToken != null) {
+              _isRefreshing = true;
               try {
-                // Các request 401 đến sau sẽ phải đợi dòng này chạy xong
+                if (kDebugMode) print('🔄 Starting token refresh...');
+
+                // Trigger refresh token flow
                 final isSuccess = await onRefreshToken!();
 
                 if (isSuccess) {
                   final newToken = await _tokenStorage.getAccessToken();
 
-                  // Update token mới cho request bị lỗi
+                  if (kDebugMode)
+                    print('✅ Token refreshed successfully, retrying request');
+
+                  // Update token for the failed request
                   error.requestOptions.headers['Authorization'] =
                       'Bearer $newToken';
 
-                  // Retry request
+                  // Retry the original request
                   final response = await _dio.fetch(error.requestOptions);
+                  _isRefreshing = false;
                   return handler.resolve(response);
+                } else {
+                  if (kDebugMode) print('❌ Token refresh returned false');
                 }
               } catch (e) {
-                if (kDebugMode) print(' Token refresh failed: $e');
+                if (kDebugMode) print('⚠️ Token refresh exception: $e');
+              } finally {
+                _isRefreshing = false;
               }
             }
-            // Refresh thất bại -> Clear token
+
+            // Refresh failed or no callback -> Clear tokens
+            if (kDebugMode) print('🧹 Clearing tokens due to failed refresh');
             await _tokenStorage.clearTokens();
           }
 

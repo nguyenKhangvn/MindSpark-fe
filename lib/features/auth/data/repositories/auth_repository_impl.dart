@@ -97,7 +97,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final currentRefreshToken = await tokenStorage.getRefreshToken();
       if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
-        if (kDebugMode) print('❌ [AuthRepo] No refresh token in storage');
+        if (kDebugMode) print(' [AuthRepo] No refresh token in storage');
         return const Left('No refresh token available');
       }
 
@@ -123,7 +123,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(response.toEntity());
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [AuthRepo] Refresh failed with exception: $e');
+        print(' [AuthRepo] Refresh failed with exception: $e');
         print('🧹 [AuthRepo] Clearing all tokens');
       }
       // Clear tokens on refresh failure

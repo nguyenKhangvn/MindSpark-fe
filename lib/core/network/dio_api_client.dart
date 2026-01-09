@@ -109,7 +109,7 @@ class DioApiClient {
                   _isRefreshing = false;
                   return handler.resolve(response);
                 } else {
-                  if (kDebugMode) print('❌ Token refresh returned false');
+                  if (kDebugMode) print(' Token refresh returned false');
                 }
               } catch (e) {
                 if (kDebugMode) print('⚠️ Token refresh exception: $e');

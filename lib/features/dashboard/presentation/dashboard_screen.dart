@@ -98,7 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         );
       }
     } catch (e) {
-      print('⚠️ Lỗi check pending OCR: $e');
+      print(' Lỗi check pending OCR: $e');
     }
   }
 
@@ -247,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               : _buildProfileTab(context),
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton.extended(
-            heroTag: "fab_scan_home",
+              heroTag: "fab_scan_home",
               onPressed: () {
                 // debugger();
                 Navigator.pushNamed(context, AppRouter.ocrResult);

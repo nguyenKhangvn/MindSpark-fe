@@ -55,7 +55,7 @@ class DioApiClient {
           }
 
           if (kDebugMode) {
-            print('🚀 REQUEST: ${options.method} ${options.uri}');
+            print(' REQUEST: ${options.method} ${options.uri}');
             if (options.data != null) print('📦 Body: ${options.data}');
           }
           handler.next(options);
@@ -63,14 +63,14 @@ class DioApiClient {
         onResponse: (response, handler) {
           if (kDebugMode) {
             print(
-                '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+                ' RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
           }
           handler.next(response);
         },
         onError: (error, handler) async {
           if (kDebugMode) {
             print(
-                '❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
+                ' ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}');
             print('💬 Message: ${error.message}');
           }
 
@@ -93,7 +93,7 @@ class DioApiClient {
                   return handler.resolve(response);
                 }
               } catch (e) {
-                if (kDebugMode) print('⚠️ Token refresh failed: $e');
+                if (kDebugMode) print(' Token refresh failed: $e');
               }
             }
             // Refresh thất bại -> Clear token

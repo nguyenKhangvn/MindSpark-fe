@@ -277,7 +277,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             Expanded(
               child: _buildStatCard(
                 context,
-                title: '🔥 Day Streak',
+                title: ' Day Streak',
                 value: '${stats.streak}',
                 color: Colors.orange,
                 icon: Icons.local_fire_department,

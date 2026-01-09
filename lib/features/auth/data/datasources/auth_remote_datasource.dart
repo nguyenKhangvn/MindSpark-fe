@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/dio_api_client.dart';
 import '../models/user_model.dart';
 
@@ -75,6 +76,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthResponseModel> refreshToken(String refreshToken) async {
+    if (kDebugMode) {
+      print('🌐 [RemoteDataSource] POST /auth/refresh');
+    }
+
     // Use postWithoutInterceptor to avoid circular loop
     final response = await apiClient.postWithoutInterceptor(
       '/auth/refresh',
@@ -82,6 +87,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'refreshToken': refreshToken,
       },
     );
+
+    if (kDebugMode) {
+      print('📥 [RemoteDataSource] Got response: ${response.statusCode}');
+      print('   Data keys: ${response.data?.keys}');
+    }
 
     return AuthResponseModel.fromJson(response.data as Map<String, dynamic>);
   }

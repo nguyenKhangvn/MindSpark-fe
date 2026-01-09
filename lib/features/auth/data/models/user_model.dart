@@ -46,12 +46,12 @@ class UserModel extends UserEntity {
 class AuthResponseModel {
   final String accessToken;
   final String refreshToken;
-  final UserModel user;
+  final UserModel? user; // Nullable for refresh token response
 
   AuthResponseModel({
     required this.accessToken,
     required this.refreshToken,
-    required this.user,
+    this.user, // Optional
   });
 
   /// From JSON
@@ -59,7 +59,9 @@ class AuthResponseModel {
     return AuthResponseModel(
       accessToken: json['accessToken'] as String? ?? '',
       refreshToken: json['refreshToken'] as String? ?? '',
-      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+      user: json['user'] != null
+          ? UserModel.fromJson(json['user'] as Map<String, dynamic>)
+          : null, // Handle null user for refresh response
     );
   }
 
@@ -68,7 +70,7 @@ class AuthResponseModel {
     return {
       'accessToken': accessToken,
       'refreshToken': refreshToken,
-      'user': user.toJson(),
+      if (user != null) 'user': user!.toJson(), // Only include if not null
     };
   }
 

@@ -20,12 +20,12 @@ class UserEntity extends Equatable {
 class AuthResponseEntity extends Equatable {
   final String accessToken;
   final String refreshToken;
-  final UserEntity user;
+  final UserEntity? user; // Nullable for refresh token response
 
   const AuthResponseEntity({
     required this.accessToken,
     required this.refreshToken,
-    required this.user,
+    this.user, // Optional
   });
 
   @override

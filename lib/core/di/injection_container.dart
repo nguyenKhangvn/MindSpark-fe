@@ -266,17 +266,29 @@ void _setupRefreshTokenCallback() {
   final authRepo = sl<AuthRepository>();
 
   apiClient.onRefreshToken = () async {
+    if (kDebugMode) {
+      print('🔄 [Callback] onRefreshToken triggered');
+    }
+
     final result = await authRepo.refreshToken();
 
     return result.fold(
       (error) {
         if (kDebugMode) {
-          print(' Refresh token failed: $error');
+          print('❌ [Callback] Refresh token failed: $error');
+          print('📍 [Callback] Navigating to login...');
         }
         sl<NavigationService>().navigateToLogin();
         return false; // Refresh failed
       },
-      (response) => true, // Refresh success
+      (response) {
+        if (kDebugMode) {
+          print('✅ [Callback] Refresh token success!');
+          print(
+              '   New access token: ${response.accessToken.substring(0, 20)}...');
+        }
+        return true; // Refresh success
+      },
     );
   };
 }

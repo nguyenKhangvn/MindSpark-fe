@@ -35,10 +35,16 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.fold(
       (error) => emit(AuthError(error)),
-      (authResponse) => emit(AuthAuthenticated(
-        user: authResponse.user,
-        message: 'Registration successful',
-      )),
+      (authResponse) {
+        if (authResponse.user != null) {
+          emit(AuthAuthenticated(
+            user: authResponse.user!,
+            message: 'Registration successful',
+          ));
+        } else {
+          emit(const AuthError('Registration failed: No user data received'));
+        }
+      },
     );
   }
 
@@ -56,10 +62,16 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.fold(
       (error) => emit(AuthError(error)),
-      (authResponse) => emit(AuthAuthenticated(
-        user: authResponse.user,
-        message: 'Login successful',
-      )),
+      (authResponse) {
+        if (authResponse.user != null) {
+          emit(AuthAuthenticated(
+            user: authResponse.user!,
+            message: 'Login successful',
+          ));
+        } else {
+          emit(const AuthError('Login failed: No user data received'));
+        }
+      },
     );
   }
 

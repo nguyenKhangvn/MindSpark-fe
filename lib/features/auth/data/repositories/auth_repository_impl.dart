@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../domain/entities/user_entity.dart'; // Chứa cả UserEntity và AuthResponseEntity
 import '../../domain/repositories/auth_repository.dart';
@@ -21,7 +22,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String name,
-  }) async { 
+  }) async {
     try {
       final response = await remoteDataSource.register(
         email: email,
@@ -92,19 +93,39 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<String, AuthResponseEntity>> refreshToken() async {
     try {
+      if (kDebugMode) print('🔄 [AuthRepo] Starting refresh token...');
+
       final currentRefreshToken = await tokenStorage.getRefreshToken();
       if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
+        if (kDebugMode) print('❌ [AuthRepo] No refresh token in storage');
         return const Left('No refresh token available');
       }
 
+      if (kDebugMode) {
+        print('📤 [AuthRepo] Calling remote datasource with refresh token');
+        print('   Token: ${currentRefreshToken.substring(0, 20)}...');
+      }
+
       final response = await remoteDataSource.refreshToken(currentRefreshToken);
+
+      if (kDebugMode) {
+        print('✅ [AuthRepo] Got new tokens from server');
+        print('   Access: ${response.accessToken.substring(0, 20)}...');
+        print('   Refresh: ${response.refreshToken.substring(0, 20)}...');
+      }
 
       // Save new tokens
       await tokenStorage.saveAccessToken(response.accessToken);
       await tokenStorage.saveRefreshToken(response.refreshToken);
 
+      if (kDebugMode) print('💾 [AuthRepo] New tokens saved to storage');
+
       return Right(response.toEntity());
     } catch (e) {
+      if (kDebugMode) {
+        print('❌ [AuthRepo] Refresh failed with exception: $e');
+        print('🧹 [AuthRepo] Clearing all tokens');
+      }
       // Clear tokens on refresh failure
       await tokenStorage.clearTokens();
       return Left(_handleError(e));
